@@ -1,0 +1,167 @@
+:root {
+  font-family: "Avenir Next", "Segoe UI", sans-serif;
+  color: #1f2d3d;
+  background: #ffffff;
+  --main-blue: #3498db;
+  --secondary-blue: #3498db;
+  --white: #ffffff;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--secondary-blue);
+}
+
+.page {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 1rem;
+  display: grid;
+  gap: 1rem;
+}
+
+.card {
+  background: var(--white);
+  border: 1px solid #d6ecfb;
+  border-radius: 12px;
+  padding: 1rem;
+  box-shadow: 0 8px 24px rgba(52, 152, 219, 0.08);
+}
+
+.headerRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.headerLogo {
+  width: clamp(140px, 24vw, 220px);
+  height: auto;
+  object-fit: contain;
+}
+
+h1,
+h2 {
+  margin: 0 0 0.65rem;
+}
+
+.muted {
+  color: #4b6783;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.7rem;
+  margin-bottom: 0.8rem;
+}
+
+label {
+  display: grid;
+  gap: 0.3rem;
+  font-size: 0.9rem;
+}
+
+input,
+textarea,
+select,
+button {
+  font: inherit;
+}
+
+input,
+textarea,
+select {
+  width: 100%;
+  border: 1px solid #b8ddf6;
+  border-radius: 8px;
+  padding: 0.5rem 0.55rem;
+  background: var(--white);
+}
+
+.wide {
+  grid-column: 1 / -1;
+}
+
+.stack {
+  display: grid;
+  gap: 0.3rem;
+  margin-top: 0.8rem;
+}
+
+textarea {
+  min-height: 74px;
+  resize: vertical;
+}
+
+button {
+  border: none;
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.primary {
+  background: var(--main-blue);
+  color: var(--white);
+}
+
+.danger {
+  background: #eaf5fd;
+  color: var(--secondary-blue);
+}
+
+.summary {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.65rem;
+  border: 1px solid #b8ddf6;
+  border-radius: 10px;
+  margin-bottom: 0.8rem;
+  background: var(--white);
+}
+
+.tableWrap {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 680px;
+}
+
+th,
+td {
+  border-bottom: 1px solid #e2f1fb;
+  text-align: left;
+  padding: 0.55rem;
+  vertical-align: top;
+  font-size: 0.92rem;
+}
+
+th {
+  color: #215a84;
+  background: #edf7fe;
+}
+
+@media (max-width: 720px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .headerRow {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .headerLogo {
+    align-self: flex-end;
+  }
+}
