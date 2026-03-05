@@ -32,6 +32,17 @@ body {
   box-shadow: 0 8px 24px rgba(52, 152, 219, 0.08);
 }
 
+.cardsRow {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  align-items: start;
+}
+
+.questionCard {
+  min-width: 0;
+}
+
 .headerRow {
   display: flex;
   align-items: center;
@@ -163,5 +174,11 @@ th {
 
   .headerLogo {
     align-self: flex-end;
+  }
+}
+
+@media (max-width: 1024px) {
+  .cardsRow {
+    grid-template-columns: 1fr;
   }
 }

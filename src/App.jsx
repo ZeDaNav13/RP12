@@ -160,6 +160,9 @@ function money(value) {
 export default function App() {
   const [answers, setAnswers] = useState({});
   const [customCodes, setCustomCodes] = useState({});
+  const question1 = questions.slice(0, 1);
+  const questions2to5 = questions.slice(1, 5);
+  const questions6to8 = questions.slice(5, 8);
 
   const selectedItems = useMemo(() => {
     return questions
@@ -206,32 +209,88 @@ export default function App() {
         </div>
       </section>
 
-      <section className="card">
-        <h2>Perguntas</h2>
-        <div className="grid">
-          {questions.map((q) => (
-            <label key={q.id} className="wide">
-              {q.label}
-              <select
-                value={answers[q.id] ?? ""}
-                onChange={(e) =>
-                  setAnswers((prev) => ({
-                    ...prev,
-                    [q.id]: e.target.value
-                  }))
-                }
-              >
-                <option value="">Selecionar...</option>
-                {q.options.map((option) => (
-                  <option key={option} value={option}>
-                    {option}
-                  </option>
-                ))}
-              </select>
-            </label>
-          ))}
-        </div>
-      </section>
+      <div className="cardsRow">
+        <section className="card questionCard">
+          <h2>Pergunta 1</h2>
+          <div className="grid">
+            {question1.map((q) => (
+              <label key={q.id} className="wide">
+                {q.label}
+                <select
+                  value={answers[q.id] ?? ""}
+                  onChange={(e) =>
+                    setAnswers((prev) => ({
+                      ...prev,
+                      [q.id]: e.target.value
+                    }))
+                  }
+                >
+                  <option value="">Selecionar...</option>
+                  {q.options.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ))}
+          </div>
+        </section>
+
+        <section className="card questionCard">
+          <h2>Perguntas 2-5</h2>
+          <div className="grid">
+            {questions2to5.map((q) => (
+              <label key={q.id} className="wide">
+                {q.label}
+                <select
+                  value={answers[q.id] ?? ""}
+                  onChange={(e) =>
+                    setAnswers((prev) => ({
+                      ...prev,
+                      [q.id]: e.target.value
+                    }))
+                  }
+                >
+                  <option value="">Selecionar...</option>
+                  {q.options.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ))}
+          </div>
+        </section>
+
+        <section className="card questionCard">
+          <h2>Perguntas 6-8</h2>
+          <div className="grid">
+            {questions6to8.map((q) => (
+              <label key={q.id} className="wide">
+                {q.label}
+                <select
+                  value={answers[q.id] ?? ""}
+                  onChange={(e) =>
+                    setAnswers((prev) => ({
+                      ...prev,
+                      [q.id]: e.target.value
+                    }))
+                  }
+                >
+                  <option value="">Selecionar...</option>
+                  {q.options.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ))}
+          </div>
+        </section>
+      </div>
 
       <section className="card">
         <h2>Resumo</h2>
