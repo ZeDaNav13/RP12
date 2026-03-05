@@ -105,6 +105,14 @@ select {
   margin-top: 0.8rem;
 }
 
+.actionsRow {
+  margin-top: 0.7rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  align-items: center;
+}
+
 textarea {
   min-height: 74px;
   resize: vertical;

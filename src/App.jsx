@@ -139,14 +139,48 @@ const assemblyCodes = {
   "sonda_condutividade:Condutividade m0c": "CD",
   "sonda_condutividade:Sem sonda de condutividade": "-"
 };
+const assemblyTags = {
+  is2_modelo: "MDC_iS",
+  bomba_biocida_inorganico: "BBI",
+  bomba_biocida_organico: "BBO",
+  bomba_controlo_ph: "BPH",
+  bomba_inibidor: "BIN",
+  sonda_cloro: "SCL",
+  sonda_ph: "SPH",
+  sonda_condutividade: "SCD"
+};
+const pumpQuestionIds = [
+  "bomba_biocida_inorganico",
+  "bomba_biocida_organico",
+  "bomba_controlo_ph",
+  "bomba_inibidor"
+];
+const probeQuestionIds = ["sonda_cloro", "sonda_ph", "sonda_condutividade"];
 
 function keyFor(questionId, option) {
   return `${questionId}:${option}`;
 }
 
+function getNoneOption(question) {
+  return question.options.find((option) => /^(nenhum|sem)/i.test(option.trim())) ?? "";
+}
+
 function defaultAssemblyCode(questionId, option) {
   if (questionId === "is2_modelo") return option ?? "";
   return assemblyCodes[keyFor(questionId, option)] ?? "";
+}
+
+function formatPumpCounts(pumpCodes) {
+  const orderedCounts = [];
+  pumpCodes.forEach((code) => {
+    const existing = orderedCounts.find((item) => item.code === code);
+    if (existing) {
+      existing.count += 1;
+    } else {
+      orderedCounts.push({ code, count: 1 });
+    }
+  });
+  return orderedCounts.map((item) => `${item.count}${item.code}`).join("+");
 }
 
 function money(value) {
@@ -158,30 +192,13 @@ function money(value) {
 }
 
 export default function App() {
-  const [answers, setAnswers] = useState({});
-  const [customCodes, setCustomCodes] = useState({});
+  const [answers, setAnswers] = useState(() =>
+    Object.fromEntries(questions.map((q) => [q.id, getNoneOption(q)]))
+  );
+  const [copyMsg, setCopyMsg] = useState("");
   const question1 = questions.slice(0, 1);
   const questions2to5 = questions.slice(1, 5);
   const questions6to8 = questions.slice(5, 8);
-
-  const selectedItems = useMemo(() => {
-    return questions
-      .map((q) => {
-        const selected = answers[q.id];
-        if (!selected) return null;
-        const key = keyFor(q.id, selected);
-        const price = prices[key] ?? 0;
-        const code = customCodes[key] ?? defaultAssemblyCode(q.id, selected);
-        return {
-          questionId: q.id,
-          questionLabel: q.label,
-          option: selected,
-          code,
-          price
-        };
-      })
-      .filter(Boolean);
-  }, [answers, customCodes]);
 
   const total = useMemo(() => {
     return questions.reduce((sum, q) => {
@@ -191,11 +208,62 @@ export default function App() {
   }, [answers]);
 
   const assemblyLine = useMemo(() => {
-    return selectedItems
-      .map((item) => item.code.trim())
-      .filter((code) => code.length > 0)
-      .join(" + ");
-  }, [selectedItems]);
+    const modelOption = answers.is2_modelo ?? "";
+    const modelCode = (defaultAssemblyCode("is2_modelo", modelOption) ?? "-").trim() || "-";
+
+    const pumpCodes = pumpQuestionIds
+      .map((questionId) => {
+        const option = answers[questionId] ?? "";
+        return (defaultAssemblyCode(questionId, option) ?? "-").trim() || "-";
+      })
+      .filter((code) => code !== "-");
+    const dosingSegment = pumpCodes.length > 0 ? `D${formatPumpCounts(pumpCodes)}` : "";
+
+    const probeSegments = probeQuestionIds.map((questionId) => {
+      const option = answers[questionId] ?? "";
+      const code = (defaultAssemblyCode(questionId, option) ?? "-").trim() || "-";
+      return `${assemblyTags[questionId]}:${code}`;
+    });
+
+    return [
+      `${assemblyTags.is2_modelo}.${modelCode}`,
+      dosingSegment,
+      ...probeSegments.filter((segment) => !segment.endsWith(":-"))
+    ]
+      .filter(Boolean)
+      .join("_");
+  }, [answers]);
+
+  const assemblyShortLine = useMemo(() => {
+    const modelOption = answers.is2_modelo ?? "";
+    const modelCode = (defaultAssemblyCode("is2_modelo", modelOption) ?? "-").trim() || "-";
+
+    const pumpCodes = pumpQuestionIds
+      .map((questionId) => {
+        const option = answers[questionId] ?? "";
+        return (defaultAssemblyCode(questionId, option) ?? "-").trim() || "-";
+      })
+      .filter((code) => code !== "-");
+    const dosingSegment = pumpCodes.length > 0 ? `D${formatPumpCounts(pumpCodes)}` : "";
+
+    const probeCodes = probeQuestionIds.map((questionId) => {
+      const option = answers[questionId] ?? "";
+      return (defaultAssemblyCode(questionId, option) ?? "-").trim() || "-";
+    });
+
+    return [modelCode, dosingSegment, ...probeCodes].filter(Boolean).join(" + ");
+  }, [answers]);
+
+  const copyToClipboard = async (text) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopyMsg("Copiado");
+      window.setTimeout(() => setCopyMsg(""), 1400);
+    } catch {
+      setCopyMsg("Falhou a cópia");
+      window.setTimeout(() => setCopyMsg(""), 1800);
+    }
+  };
 
   return (
     <main className="page">
@@ -225,7 +293,6 @@ export default function App() {
                     }))
                   }
                 >
-                  <option value="">Selecionar...</option>
                   {q.options.map((option) => (
                     <option key={option} value={option}>
                       {option}
@@ -252,7 +319,6 @@ export default function App() {
                     }))
                   }
                 >
-                  <option value="">Selecionar...</option>
                   {q.options.map((option) => (
                     <option key={option} value={option}>
                       {option}
@@ -279,7 +345,6 @@ export default function App() {
                     }))
                   }
                 >
-                  <option value="">Selecionar...</option>
                   {q.options.map((option) => (
                     <option key={option} value={option}>
                       {option}
@@ -303,59 +368,28 @@ export default function App() {
       <section className="card">
         <h2>Linha de Montagem</h2>
         <p className="muted">
-          Preencha os códigos internos por opção selecionada. Este bloco gera a linha para a
-          equipa de montagem.
+          Ajuste as perguntas acima e veja os códigos de montagem atualizarem automaticamente.
         </p>
 
-        <div className="tableWrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Pergunta</th>
-                <th>Resposta</th>
-                <th>Código da peça</th>
-                <th>Preço</th>
-              </tr>
-            </thead>
-            <tbody>
-              {selectedItems.length === 0 ? (
-                <tr>
-                  <td colSpan="4" className="muted">
-                    Sem respostas selecionadas.
-                  </td>
-                </tr>
-              ) : (
-                selectedItems.map((item) => {
-                  const key = keyFor(item.questionId, item.option);
-                  return (
-                    <tr key={key}>
-                      <td>{item.questionLabel}</td>
-                      <td>{item.option}</td>
-                      <td>
-                        <input
-                          placeholder="Ex: BOMBA-VMS0706"
-                          value={customCodes[key] ?? defaultAssemblyCode(item.questionId, item.option)}
-                          onChange={(e) =>
-                            setCustomCodes((prev) => ({
-                              ...prev,
-                              [key]: e.target.value
-                            }))
-                          }
-                        />
-                      </td>
-                      <td>{money(item.price)}</td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
+        <label className="stack">
+          Linha final para montagem (com tags)
+          <textarea readOnly value={assemblyLine} />
+        </label>
 
         <label className="stack">
-          Linha final para montagem
-          <textarea readOnly value={assemblyLine || "Sem códigos preenchidos ainda."} />
+          Linha curta (apenas códigos)
+          <textarea readOnly value={assemblyShortLine} />
         </label>
+
+        <div className="actionsRow">
+          <button className="primary" onClick={() => copyToClipboard(assemblyLine)}>
+            Copiar linha com tags
+          </button>
+          <button className="danger" onClick={() => copyToClipboard(assemblyShortLine)}>
+            Copiar linha curta
+          </button>
+          {copyMsg ? <span className="muted">{copyMsg}</span> : null}
+        </div>
       </section>
     </main>
   );
