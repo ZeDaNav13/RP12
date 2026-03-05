@@ -157,7 +157,7 @@ const portaSondasPrices = {
   BF: 378.8,
   BQ: 726,
   CF: 343.16,
-  CQ: 5000,
+  CQ: 1006.62,
   DF: 228.46,
   FF: 101.26
 };
@@ -179,6 +179,21 @@ const pumpQuestionIds = [
   "bomba_inibidor"
 ];
 const probeQuestionIds = ["sonda_cloro", "sonda_ph", "sonda_condutividade"];
+const circuitoOptions = [
+  "Torres",
+  "Água Quente Sanitária",
+  "Água Consumo Humano",
+  "Piscinas",
+  "Outros"
+];
+const is2Descriptions = {
+  CP10: "CP10- Sem bomba de recirculação e sem comunicação remota",
+  CP20: "CP20- Com uma bomba de recirculação e sem comunicação remota",
+  CP30: "CP30- Sem bomba de recirculação e com comunicação remota",
+  CP40: "CP40- Com uma bomba de recirculação e com Comunicação Remota",
+  CP50: "CP50- Com duas bombas de recirculação e sem comunicação remota",
+  CP60: "CP60- Com duas bombas de recirculação e com comunicação remota"
+};
 
 function keyFor(questionId, option) {
   return `${questionId}:${option}`;
@@ -220,11 +235,23 @@ function formatPumpCounts(pumpCodes) {
   return orderedCounts.map((item) => `${item.count}${item.code}`).join("+");
 }
 
-function formatSondaSegment(probeCodes) {
+function formatSondaSegment(probeCodes, cloroSelection) {
   const selectedCodes = probeCodes.filter((code) => code !== "-");
   const selectedCount = selectedCodes.length;
   if (selectedCount === 0) return "";
-  return `M${selectedCount} ${selectedCodes.join("/")}`;
+  const ptCloroOptions = new Set([
+    "Cloro 0-2 Reiss CS4 m0c",
+    "Cloro 0-5 Reiss CS4 m0c",
+    "Cloro 0-10 Reiss CS4 m0c",
+    "Cloro 0-5 Reiss AS3 m0c",
+    "Cloro 0-20 Reiss AS3 m0c",
+    "Cloro 0-5 Reiss AS2 m0c",
+    "Cloro 0-20 Reiss AS2 m0c"
+  ]);
+  const hasPhOrCond = probeCodes[1] !== "-" || probeCodes[2] !== "-";
+  const hasPtCloro = ptCloroOptions.has((cloroSelection ?? "").trim());
+  const ptSuffix = hasPhOrCond || hasPtCloro ? ".PT" : "";
+  return `M${selectedCount} ${selectedCodes.join("/")}${ptSuffix}`;
 }
 
 function resolvePortaSondasBaseLetter(probeCodes) {
@@ -259,8 +286,8 @@ function resolvePortaSondasCode(probeCodes, cloroSelection) {
   return `${baseLetter}${suffix}`;
 }
 
-function needsBDW(portaSondasCode) {
-  return (portaSondasCode ?? "").startsWith("C");
+function needsBDW(circuito) {
+  return (circuito ?? "").trim() === "Torres";
 }
 
 function money(value) {
@@ -275,6 +302,7 @@ export default function App() {
   const [answers, setAnswers] = useState(() =>
     Object.fromEntries(questions.map((q) => [q.id, getNoneOption(q)]))
   );
+  const [circuito, setCircuito] = useState("");
   const [copyMsg, setCopyMsg] = useState("");
   const question1 = questions.slice(0, 1);
   const questions2to5 = questions.slice(1, 5);
@@ -290,9 +318,9 @@ export default function App() {
       return (defaultAssemblyCode(questionId, option) ?? "-").trim() || "-";
     });
     const portaSondasCode = resolvePortaSondasCode(probeCodes, answers.sonda_cloro);
-    const bdwTotal = needsBDW(portaSondasCode) ? bdwPrice : 0;
+    const bdwTotal = needsBDW(circuito) ? bdwPrice : 0;
     return baseTotal + (portaSondasPrices[portaSondasCode] ?? 0) + bdwTotal;
-  }, [answers]);
+  }, [answers, circuito]);
 
   const detailedRows = useMemo(() => {
     const baseRows = questions.map((q) => {
@@ -324,18 +352,27 @@ export default function App() {
         pvp: portaSondasPrices[portaSondasCode] ?? 0
       }
     ];
-    if (needsBDW(portaSondasCode)) {
+    if (needsBDW(circuito)) {
       rows.push({
         id: "bdw",
-        question: "BDW",
-        selection: "Automático",
+        question: "Circuito",
+        selection: circuito,
         code: "BDW",
         pvp: bdwPrice
       });
     }
     return rows;
-  }, [answers]);
+  }, [answers, circuito]);
   const detailedRowsWithValue = detailedRows.filter((row) => !isNoneSelection(row.selection));
+  const printedAt = useMemo(
+    () =>
+      new Intl.DateTimeFormat("pt-PT", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric"
+      }).format(new Date()),
+    []
+  );
 
   const assemblyLine = useMemo(() => {
     const modelOption = answers.is2_modelo ?? "";
@@ -353,9 +390,9 @@ export default function App() {
       const option = answers[questionId] ?? "";
       return (defaultAssemblyCode(questionId, option) ?? "-").trim() || "-";
     });
-    const sondaSegment = formatSondaSegment(probeCodes);
+    const sondaSegment = formatSondaSegment(probeCodes, answers.sonda_cloro);
     const portaSondasCode = resolvePortaSondasCode(probeCodes, answers.sonda_cloro);
-    const bdwSegment = needsBDW(portaSondasCode) ? "BDW" : "";
+    const bdwSegment = needsBDW(circuito) ? "BDW" : "";
 
     return [
       `${assemblyTags.is2_modelo}.${modelCode}`,
@@ -366,7 +403,7 @@ export default function App() {
     ]
       .filter(Boolean)
       .join("_");
-  }, [answers]);
+  }, [answers, circuito]);
 
   const copyToClipboard = async (text) => {
     try {
@@ -379,8 +416,13 @@ export default function App() {
     }
   };
 
+  const printBudget = () => {
+    window.print();
+  };
+
   return (
     <main className="page">
+      <div className="screenOnly">
       <section className="card">
         <div className="headerRow">
           <div>
@@ -412,6 +454,20 @@ export default function App() {
                     </option>
                   ))}
                 </select>
+                {answers[q.id] && is2Descriptions[answers[q.id]] ? (
+                  <p className="muted">{is2Descriptions[answers[q.id]]}</p>
+                ) : null}
+                <div className="wide circuitoField">
+                  <span>Circuito</span>
+                  <select value={circuito} onChange={(e) => setCircuito(e.target.value)}>
+                    <option value="">Seleccionar</option>
+                    {circuitoOptions.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </label>
             ))}
           </div>
@@ -503,6 +559,11 @@ export default function App() {
             </div>
           </div>
         </div>
+        <div className="printActions">
+          <button className="primary" onClick={printBudget}>
+            Imprimir / Guardar PDF
+          </button>
+        </div>
         {copyMsg ? <p className="copyStatus muted">{copyMsg}</p> : null}
       </section>
 
@@ -515,13 +576,12 @@ export default function App() {
                 <th>Question</th>
                 <th>Selection</th>
                 <th>Code</th>
-                <th className="rightCell">PVP</th>
               </tr>
             </thead>
             <tbody>
               {detailedRowsWithValue.length === 0 ? (
                 <tr>
-                  <td colSpan="4" className="muted">
+                  <td colSpan="3" className="muted">
                     Sem componentes selecionados.
                   </td>
                 </tr>
@@ -531,7 +591,6 @@ export default function App() {
                     <td>{row.question}</td>
                     <td>{row.selection}</td>
                     <td>{row.code}</td>
-                    <td className="rightCell">{money(row.pvp)}</td>
                   </tr>
                 ))
               )}
@@ -541,12 +600,46 @@ export default function App() {
       </section>
 
       <footer className="footer">
-        ©{" "}
+        © 2026{" "}
         <a href="https://paperpushers.biz" target="_blank" rel="noreferrer">
           PaperPushers
-        </a>{" "}
-        2026
+        </a>
       </footer>
+      </div>
+
+      <section className="printOnly printSheet">
+        <header className="printHeader">
+          <img className="printLogo" src={logo} alt="Logo" />
+          <div>
+            <h1>Orçamento</h1>
+            <p>Data: {printedAt}</p>
+            <p>Referência MDC: {assemblyLine}</p>
+            <p>Valor estimado: {money(total)}</p>
+          </div>
+        </header>
+
+        <section className="printDetails">
+          <h2>Detalhado</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Question</th>
+                <th>Selection</th>
+                <th>Code</th>
+              </tr>
+            </thead>
+            <tbody>
+              {detailedRowsWithValue.map((row) => (
+                <tr key={`print-${row.id}`}>
+                  <td>{row.question}</td>
+                  <td>{row.selection}</td>
+                  <td>{row.code}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </section>
+      </section>
     </main>
   );
 }

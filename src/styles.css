@@ -1,10 +1,47 @@
-@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap");
+@font-face {
+  font-family: "Horizon";
+  src: url("/fonts/horizon.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Poppins";
+  src: url("/fonts/poppins-regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Poppins";
+  src: url("/fonts/poppins-500.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Poppins";
+  src: url("/fonts/poppins-600.woff2") format("woff2");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Poppins";
+  src: url("/fonts/poppins-700.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
 
 :root {
   font-family: "Poppins", "Segoe UI", sans-serif;
   color: #1f2d3d;
-  background: #ffffff;
-  --main-blue: #3498db;
+  --main-blue: #252534;
   --secondary-blue: #3498db;
   --white: #ffffff;
 }
@@ -13,25 +50,38 @@
   box-sizing: border-box;
 }
 
+html,
+body {
+  min-height: 100%;
+}
+
+html {
+  background: var(--secondary-blue);
+  width: 100%;
+}
+
 body {
   margin: 0;
   background: var(--secondary-blue);
+  min-height: 100vh;
+  width: 100%;
+  overflow-x: hidden;
 }
 
 .page {
   max-width: 980px;
   margin: 0 auto;
-  padding: 1rem;
+  padding: 20px;
   display: grid;
   gap: 1rem;
 }
 
 .card {
   background: var(--white);
-  border: 1px solid #d6ecfb;
+  border: none;
   border-radius: 12px;
-  padding: 1rem;
-  box-shadow: 0 8px 24px rgba(52, 152, 219, 0.08);
+  padding: 20px;
+  box-shadow: none;
 }
 
 .cardsRow {
@@ -57,6 +107,10 @@ body {
   min-width: 0;
 }
 
+.headerRow h1 {
+  margin: 0;
+}
+
 .headerLogo {
   width: clamp(90px, 16vw, 150px);
   height: auto;
@@ -65,7 +119,7 @@ body {
 
 h1,
 h2 {
-  margin: 0 0 0.65rem;
+  margin: 0;
   font-family: "Horizon", "Poppins", sans-serif;
   letter-spacing: 0.03em;
   line-height: 1;
@@ -78,6 +132,7 @@ h1 {
 
 h2 {
   font-size: 28px;
+  margin-bottom: 10px;
 }
 
 .muted {
@@ -103,6 +158,11 @@ label {
   line-height: 0;
 }
 
+.circuitoField {
+  display: grid;
+  gap: 0.3rem;
+}
+
 input,
 textarea,
 select,
@@ -116,7 +176,7 @@ select {
   width: 100%;
   border: none;
   border-radius: 8px;
-  padding: 0.5rem 0.55rem;
+  padding: 20px;
   background: var(--white);
 }
 
@@ -158,7 +218,7 @@ textarea {
 button {
   border: none;
   border-radius: 8px;
-  padding: 0.5rem 0.75rem;
+  padding: 20px;
   cursor: pointer;
   font-weight: 600;
 }
@@ -174,9 +234,10 @@ button {
 }
 
 .summaryList {
-  border: 1px solid #b8ddf6;
+  border: none;
   border-radius: 10px;
-  background: var(--white);
+  background: #f0eee9;
+  overflow: hidden;
 }
 
 .summaryRow {
@@ -184,8 +245,10 @@ button {
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  padding: 0.65rem 0.8rem;
-  border-bottom: 1px solid #e2f1fb;
+  padding: 20px;
+  border: none;
+  border-bottom: 1px solid #ffffff;
+  background: transparent;
 }
 
 .summaryRow:last-child {
@@ -201,7 +264,7 @@ button {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 0.45rem;
+  gap: 0.8rem;
   min-width: 0;
 }
 
@@ -211,9 +274,9 @@ button {
 }
 
 .copyIconButton {
-  border: 1px solid #b8ddf6;
-  background: #edf7fe;
-  color: #215a84;
+  border: none;
+  background: var(--secondary-blue);
+  color: #ffffff;
   width: 32px;
   height: 32px;
   border-radius: 8px;
@@ -221,7 +284,8 @@ button {
   align-items: center;
   justify-content: center;
   padding: 0;
-  font-size: 1rem;
+  font-size: 1.25rem;
+  line-height: 1;
 }
 
 .copyStatus {
@@ -231,6 +295,8 @@ button {
 
 .tableWrap {
   overflow-x: auto;
+  border-radius: 12px;
+  overflow: hidden;
 }
 
 table {
@@ -241,16 +307,20 @@ table {
 
 th,
 td {
-  border-bottom: 1px solid #e2f1fb;
+  border-bottom: 1px solid #ffffff;
   text-align: left;
-  padding: 0.55rem;
+  padding: 20px;
   vertical-align: top;
   font-size: 0.92rem;
 }
 
 th {
-  color: #215a84;
-  background: #edf7fe;
+  color: var(--secondary-blue);
+  background: var(--main-blue);
+}
+
+td {
+  background: #f0eee9;
 }
 
 .rightCell {
@@ -262,15 +332,40 @@ th {
   text-align: center;
   color: #eaf5fd;
   font-size: 0.9rem;
-  padding: 0.25rem 0 0.5rem;
+  padding: 20px 0;
 }
 
 .footer a {
   color: #ffffff;
+  text-decoration: none;
 }
 
-@media (max-width: 720px) {
-  .grid {
+.footer a:visited,
+.footer a:hover,
+.footer a:active,
+.footer a:focus {
+  color: #ffffff;
+  text-decoration: none;
+}
+
+.screenOnly {
+  display: contents;
+}
+
+.printOnly {
+  display: none;
+}
+
+.printActions {
+  margin-top: 20px;
+}
+
+@media (max-width: 900px) {
+  .page {
+    padding: 14px;
+  }
+
+  .cardsRow {
     grid-template-columns: 1fr;
   }
 
@@ -283,6 +378,34 @@ th {
     align-self: flex-end;
   }
 
+  h1 {
+    font-size: 30px;
+    white-space: normal;
+  }
+
+  h2 {
+    font-size: 20px;
+  }
+
+  body,
+  label,
+  input,
+  textarea,
+  select,
+  button,
+  th,
+  td,
+  .muted,
+  .summaryValue,
+  .summaryLabel,
+  .footer {
+    font-size: 14px;
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+  }
+
   .summaryRow {
     flex-direction: column;
     align-items: flex-start;
@@ -293,8 +416,87 @@ th {
   }
 }
 
-@media (max-width: 1024px) {
-  .cardsRow {
-    grid-template-columns: 1fr;
+@media print {
+  @page {
+    size: A4;
+    margin: 12mm;
+  }
+
+  html,
+  body {
+    background: #ffffff;
+  }
+
+  .screenOnly {
+    display: none !important;
+  }
+
+  .printOnly {
+    display: block !important;
+  }
+
+  .page {
+    max-width: 100%;
+    padding: 0;
+    margin: 0;
+    gap: 0;
+  }
+
+  .printSheet {
+    font-family: "Poppins", sans-serif;
+    color: #111;
+  }
+
+  .printHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 10px;
+    margin-bottom: 14px;
+  }
+
+  .printHeader h1 {
+    font-family: "Horizon", "Poppins", sans-serif;
+    font-size: 30px;
+    white-space: normal;
+    margin: 0 0 8px;
+    color: #111;
+  }
+
+  .printHeader p {
+    margin: 0 0 6px;
+    font-size: 12px;
+  }
+
+  .printLogo {
+    width: 130px;
+    height: auto;
+  }
+
+  .printDetails h2 {
+    font-size: 20px;
+    margin: 0 0 10px;
+    color: #111;
+  }
+
+  .printDetails table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 0;
+  }
+
+  .printDetails th,
+  .printDetails td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    font-size: 12px;
+    background: #fff;
+    color: #111;
+  }
+
+  .printDetails th {
+    font-weight: 600;
   }
 }
