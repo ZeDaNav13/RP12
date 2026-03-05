@@ -4,32 +4,42 @@ import logo from "../logo-aquaservice_big.svg";
 const questions = [
   {
     id: "is2_modelo",
-    label: "Selecione o Modelo do iS2",
+    detailLabel: "IS₂",
+    label: (
+      <span className="is2Label">
+        IS<sub>2</sub>
+      </span>
+    ),
     options: ["CP10", "CP20", "CP30", "CP40", "CP50", "CP60", "Nenhum"]
   },
   {
     id: "bomba_biocida_inorganico",
-    label: "Selecione a Bomba de Biocida Inorgânico",
+    detailLabel: "Biocida Inorgânico",
+    label: "Biocida Inorgânico",
     options: ["VMS0706", "VCL0706", "Sem Bombas"]
   },
   {
     id: "bomba_biocida_organico",
-    label: "Selecione a Bomba de Biocida Orgânico",
+    detailLabel: "Biocida Orgânico",
+    label: "Biocida Orgânico",
     options: ["VMS0706", "VCL0706", "Sem Bombas"]
   },
   {
     id: "bomba_controlo_ph",
-    label: "Selecione a Bomba de Controlo de pH",
+    detailLabel: "Controlo de pH",
+    label: "Controlo de pH",
     options: ["VMS0706", "VCL0706", "Sem Bombas"]
   },
   {
     id: "bomba_inibidor",
-    label: "Selecione a Bomba de Inibidor",
+    detailLabel: "Inibidor",
+    label: "Inibidor",
     options: ["VMS0706", "VCL0706", "Sem Bombas"]
   },
   {
     id: "sonda_cloro",
-    label: "Selecione a Sonda de Cloro",
+    detailLabel: "Cloro",
+    label: "Cloro",
     options: [
       "Cloro 0-2 mA Reiss CS4",
       "Cloro 0-5 mA Reiss CS4",
@@ -52,12 +62,14 @@ const questions = [
   },
   {
     id: "sonda_ph",
-    label: "Selecione a Sonda de pH",
+    detailLabel: "pH",
+    label: "pH",
     options: ["pH m0c", "Sem sonda de pH"]
   },
   {
     id: "sonda_condutividade",
-    label: "Selecione a Sonda de Condutividade",
+    detailLabel: "Condutividade",
+    label: "Condutividade",
     options: ["Condutividade m0c", "Sem sonda de condutividade"]
   }
 ];
@@ -139,6 +151,17 @@ const assemblyCodes = {
   "sonda_condutividade:Condutividade m0c": "CD",
   "sonda_condutividade:Sem sonda de condutividade": "-"
 };
+const portaSondasPrices = {
+  AF: 311.88,
+  AQ: 445.38,
+  BF: 378.8,
+  BQ: 726,
+  CF: 343.16,
+  CQ: 5000,
+  DF: 228.46,
+  FF: 101.26
+};
+const bdwPrice = 191.34;
 const assemblyTags = {
   is2_modelo: "MDC_iS",
   bomba_biocida_inorganico: "BBI",
@@ -165,8 +188,15 @@ function getNoneOption(question) {
   return question.options.find((option) => /^(nenhum|sem)/i.test(option.trim())) ?? "";
 }
 
+function isNoneSelection(selection) {
+  return /^(nenhum|sem)/i.test((selection ?? "").trim());
+}
+
 function defaultAssemblyCode(questionId, option) {
-  if (questionId === "is2_modelo") return option ?? "";
+  if (questionId === "is2_modelo") {
+    if ((option ?? "").trim().toLowerCase() === "nenhum") return "_";
+    return option ?? "";
+  }
   return assemblyCodes[keyFor(questionId, option)] ?? "";
 }
 
@@ -180,7 +210,57 @@ function formatPumpCounts(pumpCodes) {
       orderedCounts.push({ code, count: 1 });
     }
   });
+  const priority = { BDP: 0, BDC: 1 };
+  orderedCounts.sort((a, b) => {
+    const pa = priority[a.code] ?? 99;
+    const pb = priority[b.code] ?? 99;
+    if (pa !== pb) return pa - pb;
+    return a.code.localeCompare(b.code);
+  });
   return orderedCounts.map((item) => `${item.count}${item.code}`).join("+");
+}
+
+function formatSondaSegment(probeCodes) {
+  const selectedCodes = probeCodes.filter((code) => code !== "-");
+  const selectedCount = selectedCodes.length;
+  if (selectedCount === 0) return "";
+  return `M${selectedCount} ${selectedCodes.join("/")}`;
+}
+
+function resolvePortaSondasBaseLetter(probeCodes) {
+  const [cloroCode, phCode, condCode] = probeCodes;
+  const hasCloro = cloroCode !== "-";
+  const hasPh = phCode !== "-";
+  const hasCond = condCode !== "-";
+  const selectedCount = [hasCloro, hasPh, hasCond].filter(Boolean).length;
+
+  if (hasCloro) {
+    if (selectedCount === 1) return "A";
+    if (selectedCount === 2) return "B";
+    if (selectedCount === 3) return "C";
+  }
+
+  if (hasPh && hasCond) return "D";
+  if (hasPh || hasCond) return "F";
+  return "";
+}
+
+function resolvePortaSondasCode(probeCodes, cloroSelection) {
+  const baseLetter = resolvePortaSondasBaseLetter(probeCodes);
+  if (!baseLetter) return "";
+
+  const qPrefixCloroOptions = new Set([
+    "Cloro 0-5 mA Reiss AS3",
+    "Cloro 0-20 mA Reiss AS3",
+    "Cloro 0-5 Reiss AS3 m0c",
+    "Cloro 0-20 Reiss AS3 m0c"
+  ]);
+  const suffix = qPrefixCloroOptions.has((cloroSelection ?? "").trim()) ? "Q" : "F";
+  return `${baseLetter}${suffix}`;
+}
+
+function needsBDW(portaSondasCode) {
+  return (portaSondasCode ?? "").startsWith("C");
 }
 
 function money(value) {
@@ -201,11 +281,61 @@ export default function App() {
   const questions6to8 = questions.slice(5, 8);
 
   const total = useMemo(() => {
-    return questions.reduce((sum, q) => {
+    const baseTotal = questions.reduce((sum, q) => {
       const selected = answers[q.id];
       return sum + (prices[keyFor(q.id, selected)] ?? 0);
     }, 0);
+    const probeCodes = probeQuestionIds.map((questionId) => {
+      const option = answers[questionId] ?? "";
+      return (defaultAssemblyCode(questionId, option) ?? "-").trim() || "-";
+    });
+    const portaSondasCode = resolvePortaSondasCode(probeCodes, answers.sonda_cloro);
+    const bdwTotal = needsBDW(portaSondasCode) ? bdwPrice : 0;
+    return baseTotal + (portaSondasPrices[portaSondasCode] ?? 0) + bdwTotal;
   }, [answers]);
+
+  const detailedRows = useMemo(() => {
+    const baseRows = questions.map((q) => {
+      const selection = answers[q.id] ?? "";
+      const code = defaultAssemblyCode(q.id, selection) || "-";
+      const pvp = prices[keyFor(q.id, selection)] ?? 0;
+      return {
+        id: q.id,
+        question: q.detailLabel ?? q.id,
+        selection,
+        code,
+        pvp
+      };
+    });
+    const probeCodes = probeQuestionIds.map((questionId) => {
+      const option = answers[questionId] ?? "";
+      return (defaultAssemblyCode(questionId, option) ?? "-").trim() || "-";
+    });
+    const portaSondasCode = resolvePortaSondasCode(probeCodes, answers.sonda_cloro);
+    if (!portaSondasCode) return baseRows;
+
+    const rows = [
+      ...baseRows,
+      {
+        id: "porta-sondas",
+        question: "Porta-Sondas",
+        selection: "Automático",
+        code: portaSondasCode,
+        pvp: portaSondasPrices[portaSondasCode] ?? 0
+      }
+    ];
+    if (needsBDW(portaSondasCode)) {
+      rows.push({
+        id: "bdw",
+        question: "BDW",
+        selection: "Automático",
+        code: "BDW",
+        pvp: bdwPrice
+      });
+    }
+    return rows;
+  }, [answers]);
+  const detailedRowsWithValue = detailedRows.filter((row) => !isNoneSelection(row.selection));
 
   const assemblyLine = useMemo(() => {
     const modelOption = answers.is2_modelo ?? "";
@@ -217,41 +347,25 @@ export default function App() {
         return (defaultAssemblyCode(questionId, option) ?? "-").trim() || "-";
       })
       .filter((code) => code !== "-");
-    const dosingSegment = pumpCodes.length > 0 ? `D${formatPumpCounts(pumpCodes)}` : "";
-
-    const probeSegments = probeQuestionIds.map((questionId) => {
-      const option = answers[questionId] ?? "";
-      const code = (defaultAssemblyCode(questionId, option) ?? "-").trim() || "-";
-      return `${assemblyTags[questionId]}:${code}`;
-    });
-
-    return [
-      `${assemblyTags.is2_modelo}.${modelCode}`,
-      dosingSegment,
-      ...probeSegments.filter((segment) => !segment.endsWith(":-"))
-    ]
-      .filter(Boolean)
-      .join("_");
-  }, [answers]);
-
-  const assemblyShortLine = useMemo(() => {
-    const modelOption = answers.is2_modelo ?? "";
-    const modelCode = (defaultAssemblyCode("is2_modelo", modelOption) ?? "-").trim() || "-";
-
-    const pumpCodes = pumpQuestionIds
-      .map((questionId) => {
-        const option = answers[questionId] ?? "";
-        return (defaultAssemblyCode(questionId, option) ?? "-").trim() || "-";
-      })
-      .filter((code) => code !== "-");
-    const dosingSegment = pumpCodes.length > 0 ? `D${formatPumpCounts(pumpCodes)}` : "";
+    const dosingSegment = pumpCodes.length > 0 ? `D${formatPumpCounts(pumpCodes)}` : "_";
 
     const probeCodes = probeQuestionIds.map((questionId) => {
       const option = answers[questionId] ?? "";
       return (defaultAssemblyCode(questionId, option) ?? "-").trim() || "-";
     });
+    const sondaSegment = formatSondaSegment(probeCodes);
+    const portaSondasCode = resolvePortaSondasCode(probeCodes, answers.sonda_cloro);
+    const bdwSegment = needsBDW(portaSondasCode) ? "BDW" : "";
 
-    return [modelCode, dosingSegment, ...probeCodes].filter(Boolean).join(" + ");
+    return [
+      `${assemblyTags.is2_modelo}.${modelCode}`,
+      dosingSegment,
+      sondaSegment,
+      portaSondasCode,
+      bdwSegment
+    ]
+      .filter(Boolean)
+      .join("_");
   }, [answers]);
 
   const copyToClipboard = async (text) => {
@@ -271,7 +385,6 @@ export default function App() {
         <div className="headerRow">
           <div>
             <h1>Selecionador do modelo de MDC</h1>
-            <p className="muted">Fluxo guiado de perguntas para montar o orçamento.</p>
           </div>
           <img className="headerLogo" src={logo} alt="Logo" />
         </div>
@@ -279,7 +392,7 @@ export default function App() {
 
       <div className="cardsRow">
         <section className="card questionCard">
-          <h2>Pergunta 1</h2>
+          <h2>Modelo</h2>
           <div className="grid">
             {question1.map((q) => (
               <label key={q.id} className="wide">
@@ -305,7 +418,7 @@ export default function App() {
         </section>
 
         <section className="card questionCard">
-          <h2>Perguntas 2-5</h2>
+          <h2>Bombas</h2>
           <div className="grid">
             {questions2to5.map((q) => (
               <label key={q.id} className="wide">
@@ -331,7 +444,7 @@ export default function App() {
         </section>
 
         <section className="card questionCard">
-          <h2>Perguntas 6-8</h2>
+          <h2>Sondas</h2>
           <div className="grid">
             {questions6to8.map((q) => (
               <label key={q.id} className="wide">
@@ -359,38 +472,81 @@ export default function App() {
 
       <section className="card">
         <h2>Resumo</h2>
-        <div className="summary">
-          <span>Total estimado</span>
-          <strong>{money(total)}</strong>
+        <div className="summaryList">
+          <div className="summaryRow">
+            <span className="summaryLabel">Valor estimado</span>
+            <div className="summaryValueWrap">
+              <strong className="summaryValue">{money(total)}</strong>
+              <button
+                className="copyIconButton"
+                onClick={() => copyToClipboard(money(total))}
+                aria-label="Copiar valor estimado"
+                title="Copiar"
+              >
+                ⧉
+              </button>
+            </div>
+          </div>
+
+          <div className="summaryRow">
+            <span className="summaryLabel">Referência MDC</span>
+            <div className="summaryValueWrap">
+              <strong className="summaryValue">{assemblyLine}</strong>
+              <button
+                className="copyIconButton"
+                onClick={() => copyToClipboard(assemblyLine)}
+                aria-label="Copiar referência MDC"
+                title="Copiar"
+              >
+                ⧉
+              </button>
+            </div>
+          </div>
         </div>
+        {copyMsg ? <p className="copyStatus muted">{copyMsg}</p> : null}
       </section>
 
       <section className="card">
-        <h2>Linha de Montagem</h2>
-        <p className="muted">
-          Ajuste as perguntas acima e veja os códigos de montagem atualizarem automaticamente.
-        </p>
-
-        <label className="stack">
-          Linha final para montagem (com tags)
-          <textarea readOnly value={assemblyLine} />
-        </label>
-
-        <label className="stack">
-          Linha curta (apenas códigos)
-          <textarea readOnly value={assemblyShortLine} />
-        </label>
-
-        <div className="actionsRow">
-          <button className="primary" onClick={() => copyToClipboard(assemblyLine)}>
-            Copiar linha com tags
-          </button>
-          <button className="danger" onClick={() => copyToClipboard(assemblyShortLine)}>
-            Copiar linha curta
-          </button>
-          {copyMsg ? <span className="muted">{copyMsg}</span> : null}
+        <h2>Detalhado</h2>
+        <div className="tableWrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Question</th>
+                <th>Selection</th>
+                <th>Code</th>
+                <th className="rightCell">PVP</th>
+              </tr>
+            </thead>
+            <tbody>
+              {detailedRowsWithValue.length === 0 ? (
+                <tr>
+                  <td colSpan="4" className="muted">
+                    Sem componentes selecionados.
+                  </td>
+                </tr>
+              ) : (
+                detailedRowsWithValue.map((row) => (
+                  <tr key={row.id}>
+                    <td>{row.question}</td>
+                    <td>{row.selection}</td>
+                    <td>{row.code}</td>
+                    <td className="rightCell">{money(row.pvp)}</td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
       </section>
+
+      <footer className="footer">
+        ©{" "}
+        <a href="https://paperpushers.biz" target="_blank" rel="noreferrer">
+          PaperPushers
+        </a>{" "}
+        2026
+      </footer>
     </main>
   );
 }

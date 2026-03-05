@@ -1,5 +1,7 @@
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap");
+
 :root {
-  font-family: "Avenir Next", "Segoe UI", sans-serif;
+  font-family: "Poppins", "Segoe UI", sans-serif;
   color: #1f2d3d;
   background: #ffffff;
   --main-blue: #3498db;
@@ -50,8 +52,13 @@ body {
   gap: 1rem;
 }
 
+.headerRow > div {
+  flex: 1;
+  min-width: 0;
+}
+
 .headerLogo {
-  width: clamp(140px, 24vw, 220px);
+  width: clamp(90px, 16vw, 150px);
   height: auto;
   object-fit: contain;
 }
@@ -59,6 +66,18 @@ body {
 h1,
 h2 {
   margin: 0 0 0.65rem;
+  font-family: "Horizon", "Poppins", sans-serif;
+  letter-spacing: 0.03em;
+  line-height: 1;
+}
+
+h1 {
+  font-size: clamp(30px, 3.8vw, 36px);
+  white-space: nowrap;
+}
+
+h2 {
+  font-size: 28px;
 }
 
 .muted {
@@ -78,6 +97,12 @@ label {
   font-size: 0.9rem;
 }
 
+.is2Label sub {
+  font-size: 0.68em;
+  vertical-align: sub;
+  line-height: 0;
+}
+
 input,
 textarea,
 select,
@@ -89,10 +114,22 @@ input,
 textarea,
 select {
   width: 100%;
-  border: 1px solid #b8ddf6;
+  border: none;
   border-radius: 8px;
   padding: 0.5rem 0.55rem;
   background: var(--white);
+}
+
+select {
+  background: #f0eee9;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  padding-right: 2rem;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%234b6783' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.7rem center;
+  background-size: 14px 14px;
 }
 
 .wide {
@@ -136,14 +173,60 @@ button {
   color: var(--secondary-blue);
 }
 
-.summary {
-  display: flex;
-  justify-content: space-between;
-  padding: 0.65rem;
+.summaryList {
   border: 1px solid #b8ddf6;
   border-radius: 10px;
-  margin-bottom: 0.8rem;
   background: var(--white);
+}
+
+.summaryRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.65rem 0.8rem;
+  border-bottom: 1px solid #e2f1fb;
+}
+
+.summaryRow:last-child {
+  border-bottom: none;
+}
+
+.summaryLabel {
+  color: #215a84;
+  font-weight: 600;
+}
+
+.summaryValueWrap {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.45rem;
+  min-width: 0;
+}
+
+.summaryValue {
+  text-align: right;
+  word-break: break-word;
+}
+
+.copyIconButton {
+  border: 1px solid #b8ddf6;
+  background: #edf7fe;
+  color: #215a84;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  font-size: 1rem;
+}
+
+.copyStatus {
+  margin: 0.55rem 0 0;
+  text-align: right;
 }
 
 .tableWrap {
@@ -170,6 +253,22 @@ th {
   background: #edf7fe;
 }
 
+.rightCell {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.footer {
+  text-align: center;
+  color: #eaf5fd;
+  font-size: 0.9rem;
+  padding: 0.25rem 0 0.5rem;
+}
+
+.footer a {
+  color: #ffffff;
+}
+
 @media (max-width: 720px) {
   .grid {
     grid-template-columns: 1fr;
@@ -182,6 +281,15 @@ th {
 
   .headerLogo {
     align-self: flex-end;
+  }
+
+  .summaryRow {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .summaryValueWrap {
+    width: 100%;
   }
 }
 
