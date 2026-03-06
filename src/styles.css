@@ -66,15 +66,20 @@ body {
   background: var(--secondary-dark);
   min-height: 100vh;
   width: 100%;
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 .page {
+  width: 100%;
   max-width: 980px;
   margin: 0 auto;
   padding: 20px;
   display: grid;
   gap: 30px;
+}
+
+.page > * {
+  min-width: 0;
 }
 
 .card {
@@ -84,6 +89,8 @@ body {
   border-radius: 12px;
   padding: 20px;
   box-shadow: none;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .cardsRow {
@@ -184,6 +191,7 @@ button {
 input,
 textarea,
 select {
+  max-width: 100%;
   width: 100%;
   border: none;
   border-radius: 8px;
@@ -287,6 +295,7 @@ button {
 .summaryValue {
   text-align: right;
   word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 .copyIconButton {
@@ -312,13 +321,14 @@ button {
 .tableWrap {
   overflow-x: auto;
   border-radius: 12px;
-  overflow: hidden;
+  overflow-y: hidden;
 }
 
 table {
   width: 100%;
   border-collapse: collapse;
   min-width: 680px;
+  max-width: 100%;
 }
 
 th,
@@ -387,29 +397,48 @@ td {
 
 @media (max-width: 900px) {
   .page {
-    padding: 14px;
+    padding: 12px;
   }
 
   .cardsRow {
     grid-template-columns: 1fr;
   }
 
-  .headerRow {
-    flex-direction: column;
-    align-items: flex-start;
+  .card {
+    padding: 14px;
   }
 
-  .headerLogo {
-    align-self: flex-end;
+  .headerRow {
+    gap: 10px;
+    flex-wrap: nowrap;
+    min-width: 0;
+    align-items: center;
+  }
+
+  .headerRow > div {
+    min-width: 0;
+    text-align: left;
   }
 
   h1 {
-    font-size: 30px;
+    font-size: clamp(18px, 6.2vw, 24px);
     white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    line-height: 1.05;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+
+  .headerLogo {
+    width: 56px;
+    height: 56px;
+    flex: 0 0 56px;
   }
 
   h2 {
-    font-size: 20px;
+    font-size: 22px;
   }
 
   body,
@@ -427,8 +456,34 @@ td {
     font-size: 14px;
   }
 
+  button,
+  input,
+  textarea,
+  select,
+  th,
+  td,
+  .summaryRow {
+    padding: 14px;
+  }
+
   .grid {
     grid-template-columns: 1fr;
+  }
+
+  .tableWrap {
+    max-width: 100%;
+  }
+
+  table {
+    min-width: 0;
+    width: 100%;
+    table-layout: fixed;
+  }
+
+  th,
+  td {
+    word-break: break-word;
+    overflow-wrap: anywhere;
   }
 
   .summaryRow {
