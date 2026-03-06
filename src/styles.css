@@ -40,10 +40,11 @@
 
 :root {
   font-family: "Poppins", "Segoe UI", sans-serif;
-  color: #1f2d3d;
-  --main-blue: #252534;
-  --secondary-blue: #3498db;
-  --white: #ffffff;
+  color: #292929;
+  --main-blue: #292929;
+  --secondary-dark: #777777;
+  --secondary-white: #d1d1d1;
+  --white: #f0eee9;
 }
 
 * {
@@ -56,13 +57,13 @@ body {
 }
 
 html {
-  background: var(--secondary-blue);
+  background: var(--secondary-dark);
   width: 100%;
 }
 
 body {
   margin: 0;
-  background: var(--secondary-blue);
+  background: var(--secondary-dark);
   min-height: 100vh;
   width: 100%;
   overflow-x: hidden;
@@ -73,11 +74,12 @@ body {
   margin: 0 auto;
   padding: 20px;
   display: grid;
-  gap: 1rem;
+  gap: 30px;
 }
 
 .card {
   background: var(--white);
+  color: var(--main-blue);
   border: none;
   border-radius: 12px;
   padding: 20px;
@@ -102,6 +104,15 @@ body {
   gap: 1rem;
 }
 
+.headerCard {
+  background: var(--main-blue);
+  color: var(--white);
+}
+
+.headerCard h1 {
+  color: var(--white);
+}
+
 .headerRow > div {
   flex: 1;
   min-width: 0;
@@ -112,8 +123,8 @@ body {
 }
 
 .headerLogo {
-  width: clamp(90px, 16vw, 150px);
-  height: auto;
+  width: 72px;
+  height: 72px;
   object-fit: contain;
 }
 
@@ -132,11 +143,11 @@ h1 {
 
 h2 {
   font-size: 28px;
-  margin-bottom: 10px;
+  margin-bottom: 20px;
 }
 
 .muted {
-  color: #4b6783;
+  color: #292929;
 }
 
 .grid {
@@ -177,16 +188,17 @@ select {
   border: none;
   border-radius: 8px;
   padding: 20px;
-  background: var(--white);
+  background: var(--secondary-white);
+  color: var(--main-blue);
 }
 
 select {
-  background: #f0eee9;
+  background: var(--secondary-white);
   appearance: none;
   -webkit-appearance: none;
   -moz-appearance: none;
   padding-right: 2rem;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%234b6783' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23777777' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 0.7rem center;
   background-size: 14px 14px;
@@ -194,6 +206,10 @@ select {
 
 .wide {
   grid-column: 1 / -1;
+}
+
+.grid > label:not(:last-child) {
+  margin-bottom: 12px;
 }
 
 .stack {
@@ -224,19 +240,19 @@ button {
 }
 
 .primary {
-  background: var(--main-blue);
-  color: var(--white);
+  background: var(--secondary-white);
+  color: var(--main-blue);
 }
 
 .danger {
-  background: #eaf5fd;
-  color: var(--secondary-blue);
+  background: var(--secondary-white);
+  color: var(--main-blue);
 }
 
 .summaryList {
   border: none;
   border-radius: 10px;
-  background: #f0eee9;
+  background: var(--secondary-white);
   overflow: hidden;
 }
 
@@ -247,7 +263,7 @@ button {
   gap: 1rem;
   padding: 20px;
   border: none;
-  border-bottom: 1px solid #ffffff;
+  border-bottom: 1px solid var(--white);
   background: transparent;
 }
 
@@ -256,7 +272,7 @@ button {
 }
 
 .summaryLabel {
-  color: #215a84;
+  color: var(--main-blue);
   font-weight: 600;
 }
 
@@ -275,8 +291,8 @@ button {
 
 .copyIconButton {
   border: none;
-  background: var(--secondary-blue);
-  color: #ffffff;
+  background: var(--secondary-dark);
+  color: var(--white);
   width: 32px;
   height: 32px;
   border-radius: 8px;
@@ -307,20 +323,21 @@ table {
 
 th,
 td {
-  border-bottom: 1px solid #ffffff;
+  border-bottom: 1px solid var(--white);
   text-align: left;
   padding: 20px;
   vertical-align: top;
   font-size: 0.92rem;
+  color: var(--main-blue);
 }
 
 th {
-  color: var(--secondary-blue);
-  background: var(--main-blue);
+  color: var(--white);
+  background: var(--secondary-dark);
 }
 
 td {
-  background: #f0eee9;
+  background: var(--secondary-white);
 }
 
 .rightCell {
@@ -329,14 +346,15 @@ td {
 }
 
 .footer {
-  text-align: center;
-  color: #eaf5fd;
+  text-align: right;
+  color: var(--white);
   font-size: 0.9rem;
-  padding: 20px 0;
+  padding: 20px 0 0;
+  align-self: end;
 }
 
 .footer a {
-  color: #ffffff;
+  color: var(--white);
   text-decoration: none;
 }
 
@@ -344,7 +362,7 @@ td {
 .footer a:hover,
 .footer a:active,
 .footer a:focus {
-  color: #ffffff;
+  color: var(--white);
   text-decoration: none;
 }
 
@@ -357,7 +375,14 @@ td {
 }
 
 .printActions {
-  margin-top: 20px;
+  margin-top: 0;
+  width: fit-content;
+  justify-self: center;
+}
+
+.printActions .primary {
+  background: var(--secondary-dark);
+  color: var(--white);
 }
 
 @media (max-width: 900px) {

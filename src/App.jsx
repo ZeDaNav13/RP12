@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import logo from "../logo-aquaservice_big.svg";
+import logo from "../is2_logo.png";
 
 const questions = [
   {
@@ -423,7 +423,7 @@ export default function App() {
   return (
     <main className="page">
       <div className="screenOnly">
-      <section className="card">
+      <section className="card headerCard">
         <div className="headerRow">
           <div>
             <h1>Selecionador do modelo de MDC</h1>
@@ -559,11 +559,6 @@ export default function App() {
             </div>
           </div>
         </div>
-        <div className="printActions">
-          <button className="primary" onClick={printBudget}>
-            Imprimir / Guardar PDF
-          </button>
-        </div>
         {copyMsg ? <p className="copyStatus muted">{copyMsg}</p> : null}
       </section>
 
@@ -573,9 +568,9 @@ export default function App() {
           <table>
             <thead>
               <tr>
-                <th>Question</th>
-                <th>Selection</th>
-                <th>Code</th>
+                <th>Item</th>
+                <th>Selecção</th>
+                <th>Código</th>
               </tr>
             </thead>
             <tbody>
@@ -597,6 +592,12 @@ export default function App() {
             </tbody>
           </table>
         </div>
+      </section>
+
+      <section className="card printActions">
+        <button className="primary" onClick={printBudget}>
+          Imprimir / Guardar PDF
+        </button>
       </section>
 
       <footer className="footer">
@@ -623,9 +624,9 @@ export default function App() {
           <table>
             <thead>
               <tr>
-                <th>Question</th>
-                <th>Selection</th>
-                <th>Code</th>
+                <th>Item</th>
+                <th>Selecção</th>
+                <th>Código</th>
               </tr>
             </thead>
             <tbody>
