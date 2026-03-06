@@ -610,14 +610,29 @@ export default function App() {
 
       <section className="printOnly printSheet">
         <header className="printHeader">
-          <img className="printLogo" src={logo} alt="Logo" />
-          <div>
+          <div className="printCompany">
+            <p>Watercare, Tratamento de Águas Lda</p>
+            <p>Centro Empresarial de Alverca, Estrada Nacional 10, A5, 2615-187 Alverca do Ribatejo</p>
+            <p>NIPC - 506550672</p>
+          </div>
+          <div className="printMeta">
             <h1>Orçamento</h1>
-            <p>Data: {printedAt}</p>
-            <p>Referência MDC: {assemblyLine}</p>
-            <p>Valor estimado: {money(total)}</p>
+            <h2>Modelo MDC</h2>
+            <img className="printLogo" src={logo} alt="Logo" />
           </div>
         </header>
+
+        <section className="printSummary">
+          <p>
+            <strong>Modelo MDC selecionado:</strong> {answers.is2_modelo || "-"}
+          </p>
+          <p>
+            <strong>Data:</strong> {printedAt}
+          </p>
+          <p>
+            <strong>Codeline:</strong> {assemblyLine}
+          </p>
+        </section>
 
         <section className="printDetails">
           <h2>Detalhado</h2>
@@ -639,6 +654,12 @@ export default function App() {
               ))}
             </tbody>
           </table>
+        </section>
+
+        <section className="printPrice">
+          <p>
+            <strong>Preço:</strong> {money(total)}
+          </p>
         </section>
       </section>
     </main>

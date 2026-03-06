@@ -1,6 +1,6 @@
 @font-face {
-  font-family: "Horizon";
-  src: url("/fonts/horizon.woff2") format("woff2");
+  font-family: "Bebas Neue";
+  src: url("/fonts/BebasNeue-Regular.ttf") format("truetype");
   font-weight: 400;
   font-style: normal;
   font-display: swap;
@@ -8,7 +8,7 @@
 
 @font-face {
   font-family: "Poppins";
-  src: url("/fonts/poppins-regular.woff2") format("woff2");
+  src: url("/fonts/Poppins-Regular.ttf") format("truetype");
   font-weight: 400;
   font-style: normal;
   font-display: swap;
@@ -16,7 +16,7 @@
 
 @font-face {
   font-family: "Poppins";
-  src: url("/fonts/poppins-500.woff2") format("woff2");
+  src: url("/fonts/Poppins-Medium.ttf") format("truetype");
   font-weight: 500;
   font-style: normal;
   font-display: swap;
@@ -24,7 +24,7 @@
 
 @font-face {
   font-family: "Poppins";
-  src: url("/fonts/poppins-600.woff2") format("woff2");
+  src: url("/fonts/Poppins-SemiBold.ttf") format("truetype");
   font-weight: 600;
   font-style: normal;
   font-display: swap;
@@ -32,7 +32,7 @@
 
 @font-face {
   font-family: "Poppins";
-  src: url("/fonts/poppins-700.woff2") format("woff2");
+  src: url("/fonts/Poppins-Bold.ttf") format("truetype");
   font-weight: 700;
   font-style: normal;
   font-display: swap;
@@ -131,7 +131,7 @@ body {
 h1,
 h2 {
   margin: 0;
-  font-family: "Horizon", "Poppins", sans-serif;
+  font-family: "Bebas Neue", "Poppins", sans-serif;
   letter-spacing: 0.03em;
   line-height: 1;
 }
@@ -483,25 +483,51 @@ td {
   }
 
   .printHeader h1 {
-    font-family: "Horizon", "Poppins", sans-serif;
-    font-size: 30px;
+    font-family: "Bebas Neue", "Poppins", sans-serif;
+    font-size: 34px;
     white-space: normal;
-    margin: 0 0 8px;
+    margin: 0 0 6px;
     color: #111;
+  }
+
+  .printHeader h2 {
+    font-family: "Poppins", sans-serif;
+    font-size: 20px;
+    margin: 0 0 10px;
+    color: #111;
+    font-weight: 600;
   }
 
   .printHeader p {
     margin: 0 0 6px;
-    font-size: 12px;
+    font-size: 14px;
+  }
+
+  .printCompany {
+    max-width: 62%;
+  }
+
+  .printMeta {
+    text-align: right;
   }
 
   .printLogo {
-    width: 130px;
+    width: 110px;
     height: auto;
   }
 
+  .printSummary {
+    margin: 0 0 14px;
+  }
+
+  .printSummary p,
+  .printPrice p {
+    margin: 0 0 6px;
+    font-size: 15px;
+  }
+
   .printDetails h2 {
-    font-size: 20px;
+    font-size: 24px;
     margin: 0 0 10px;
     color: #111;
   }
@@ -516,12 +542,18 @@ td {
   .printDetails td {
     border: 1px solid #ddd;
     padding: 8px;
-    font-size: 12px;
+    font-size: 14px;
     background: #fff;
     color: #111;
   }
 
   .printDetails th {
     font-weight: 600;
+  }
+
+  .printPrice {
+    margin-top: 14px;
+    border-top: 1px solid #ddd;
+    padding-top: 8px;
   }
 }
