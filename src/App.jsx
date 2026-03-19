@@ -1,218 +1,188 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import logo from "../is2_logo.png";
 
-const questions = [
+const QUESTION_DEFS = [
   {
     id: "is2_modelo",
     detailLabel: "IS₂",
-    label: (
-      <span className="is2Label">
-        IS<sub>2</sub>
-      </span>
-    ),
-    options: ["CP10", "CP20", "CP30", "CP40", "CP50", "CP60", "Nenhum"]
+    label: "IS2",
+    csvFile: "is2_modelo.csv"
   },
   {
     id: "bomba_biocida_inorganico",
     detailLabel: "Biocida Inorgânico",
     label: "Biocida Inorgânico",
-    options: ["VMS0706", "VCL0706", "Sem Bombas"]
+    csvFile: "bomba_biocida_inorganico.csv"
   },
   {
     id: "bomba_biocida_organico",
     detailLabel: "Biocida Orgânico",
     label: "Biocida Orgânico",
-    options: ["VMS0706", "VCL0706", "Sem Bombas"]
+    csvFile: "bomba_biocida_organico.csv"
   },
   {
     id: "bomba_controlo_ph",
     detailLabel: "Controlo de pH",
     label: "Controlo de pH",
-    options: ["VMS0706", "VCL0706", "Sem Bombas"]
+    csvFile: "bomba_controlo_ph.csv"
   },
   {
     id: "bomba_inibidor",
     detailLabel: "Inibidor",
     label: "Inibidor",
-    options: ["VMS0706", "VCL0706", "Sem Bombas"]
+    csvFile: "bomba_inibidor.csv"
   },
   {
     id: "sonda_cloro",
     detailLabel: "Cloro",
     label: "Cloro",
-    options: [
-      "Cloro 0-2 mA Reiss CS4",
-      "Cloro 0-5 mA Reiss CS4",
-      "Cloro 0-10 mA Reiss CS4",
-      "Cloro 0-5 mA Reiss AS3",
-      "Cloro 0-20 mA Reiss AS3",
-      "Cloro 0-5 Reiss AS2",
-      "Cloro 0-20 Reiss AS2",
-      "Cloro 0-2 Reiss CS4 m0c",
-      "Cloro 0-5 Reiss CS4 m0c",
-      "Cloro 0-10 Reiss CS4 m0c",
-      "Cloro 0-5 Reiss AS3 m0c",
-      "Cloro 0-20 Reiss AS3 m0c",
-      "Cloro 0-5 Reiss AS2 m0c",
-      "Cloro 0-20 Reiss AS2 m0c",
-      "Cloro 0-2 Seko",
-      "Cloro 0-10 Seko",
-      "Sem sonda de cloro"
-    ]
+    csvFile: "sonda_cloro.csv"
   },
   {
     id: "sonda_ph",
     detailLabel: "pH",
     label: "pH",
-    options: ["pH m0c", "Sem sonda de pH"]
+    csvFile: "sonda_ph.csv"
   },
   {
     id: "sonda_condutividade",
     detailLabel: "Condutividade",
     label: "Condutividade",
-    options: ["Condutividade m0c", "Sem sonda de condutividade"]
+    csvFile: "sonda_condutividade.csv"
   }
 ];
 
-const prices = {
-  "is2_modelo:CP10": 1301.91,
-  "is2_modelo:CP20": 1396.26,
-  "is2_modelo:CP30": 1526.21,
-  "is2_modelo:CP40": 1593.57,
-  "is2_modelo:CP50": 1704.23,
-  "is2_modelo:CP60": 1931.79,
-  "is2_modelo:Nenhum": 0,
-  "bomba_biocida_inorganico:VMS0706": 450.7,
-  "bomba_biocida_inorganico:VCL0706": 287.96,
-  "bomba_biocida_inorganico:Sem Bombas": 0,
-  "bomba_biocida_organico:VMS0706": 450.7,
-  "bomba_biocida_organico:VCL0706": 287.96,
-  "bomba_biocida_organico:Sem Bombas": 0,
-  "bomba_controlo_ph:VMS0706": 450.7,
-  "bomba_controlo_ph:VCL0706": 287.96,
-  "bomba_controlo_ph:Sem Bombas": 0,
-  "bomba_inibidor:VMS0706": 450.7,
-  "bomba_inibidor:VCL0706": 287.96,
-  "bomba_inibidor:Sem Bombas": 0,
-  "sonda_cloro:Cloro 0-2 mA Reiss CS4": 1117.08,
-  "sonda_cloro:Cloro 0-5 mA Reiss CS4": 1117.08,
-  "sonda_cloro:Cloro 0-10 mA Reiss CS4": 1117.08,
-  "sonda_cloro:Cloro 0-5 mA Reiss AS3": 2273.62,
-  "sonda_cloro:Cloro 0-20 mA Reiss AS3": 2273.62,
-  "sonda_cloro:Cloro 0-5 Reiss AS2": 2006.34,
-  "sonda_cloro:Cloro 0-20 Reiss AS2": 2006.34,
-  "sonda_cloro:Cloro 0-2 Reiss CS4 m0c": 1751.66,
-  "sonda_cloro:Cloro 0-5 Reiss CS4 m0c": 1751.66,
-  "sonda_cloro:Cloro 0-10 Reiss CS4 m0c": 1751.66,
-  "sonda_cloro:Cloro 0-5 Reiss AS3 m0c": 2160.48,
-  "sonda_cloro:Cloro 0-20 Reiss AS3 m0c": 2160.48,
-  "sonda_cloro:Cloro 0-5 Reiss AS2 m0c": 1998.42,
-  "sonda_cloro:Cloro 0-20 Reiss AS2 m0c": 1998.42,
-  "sonda_cloro:Cloro 0-2 Seko": 800,
-  "sonda_cloro:Cloro 0-10 Seko": 800,
-  "sonda_cloro:Sem sonda de cloro": 0,
-  "sonda_ph:pH m0c": 432,
-  "sonda_ph:Sem sonda de pH": 0,
-  "sonda_condutividade:Condutividade m0c": 436,
-  "sonda_condutividade:Sem sonda de condutividade": 0
+const CIRCUITO_DEF = {
+  id: "circuito",
+  csvFile: "circuito.csv"
 };
-const assemblyCodes = {
-  "bomba_biocida_inorganico:VMS0706": "BDP",
-  "bomba_biocida_inorganico:VCL0706": "BDC",
-  "bomba_biocida_inorganico:Sem Bombas": "-",
-  "bomba_biocida_organico:VMS0706": "BDP",
-  "bomba_biocida_organico:VCL0706": "BDC",
-  "bomba_biocida_organico:Sem Bombas": "-",
-  "bomba_controlo_ph:VMS0706": "BDP",
-  "bomba_controlo_ph:VCL0706": "BDC",
-  "bomba_controlo_ph:Sem Bombas": "-",
-  "bomba_inibidor:VMS0706": "BDP",
-  "bomba_inibidor:VCL0706": "BDC",
-  "bomba_inibidor:Sem Bombas": "-",
-  "sonda_cloro:Cloro 0-2 mA Reiss CS4": "Cl2mA",
-  "sonda_cloro:Cloro 0-5 mA Reiss CS4": "Cl5mA",
-  "sonda_cloro:Cloro 0-10 mA Reiss CS4": "Cl10mA",
-  "sonda_cloro:Cloro 0-5 mA Reiss AS3": "Cl5mA",
-  "sonda_cloro:Cloro 0-20 mA Reiss AS3": "Cl20mA",
-  "sonda_cloro:Cloro 0-5 Reiss AS2": "Cl5mA",
-  "sonda_cloro:Cloro 0-20 Reiss AS2": "Cl20mA",
-  "sonda_cloro:Cloro 0-2 Reiss CS4 m0c": "Cl2m0c",
-  "sonda_cloro:Cloro 0-5 Reiss CS4 m0c": "Cl5m0c",
-  "sonda_cloro:Cloro 0-10 Reiss CS4 m0c": "Cl10m0c",
-  "sonda_cloro:Cloro 0-5 Reiss AS3 m0c": "Cl5m0c",
-  "sonda_cloro:Cloro 0-20 Reiss AS3 m0c": "Cl20m0c",
-  "sonda_cloro:Cloro 0-5 Reiss AS2 m0c": "Cl5m0c",
-  "sonda_cloro:Cloro 0-20 Reiss AS2 m0c": "Cl20m0c",
-  "sonda_cloro:Cloro 0-2 Seko": "Cl2mA",
-  "sonda_cloro:Cloro 0-10 Seko": "Cl10mA",
-  "sonda_cloro:Sem sonda de cloro": "-",
-  "sonda_ph:pH m0c": "pH",
-  "sonda_ph:Sem sonda de pH": "-",
-  "sonda_condutividade:Condutividade m0c": "CD",
-  "sonda_condutividade:Sem sonda de condutividade": "-"
+
+const PORTA_SONDAS_DEF = {
+  id: "porta_sondas",
+  csvFile: "porta_sondas.csv"
 };
-const portaSondasPrices = {
-  AF: 311.88,
-  AQ: 445.38,
-  BF: 378.8,
-  BQ: 726,
-  CF: 343.16,
-  CQ: 1006.62,
-  DF: 228.46,
-  FF: 101.26
+
+const BDW_DEF = {
+  id: "bdw",
+  csvFile: "bdw.csv"
 };
-const bdwPrice = 191.34;
-const assemblyTags = {
-  is2_modelo: "MDC_iS",
-  bomba_biocida_inorganico: "BBI",
-  bomba_biocida_organico: "BBO",
-  bomba_controlo_ph: "BPH",
-  bomba_inibidor: "BIN",
-  sonda_cloro: "SCL",
-  sonda_ph: "SPH",
-  sonda_condutividade: "SCD"
+
+const DEFAULT_STYLEGUIDE = {
+  main_dark: "#292929",
+  secondary_dark: "#777777",
+  secondary_white: "#D1D1D1",
+  off_white: "#F0EEE9",
+  main_white: "#FFFFFF",
+  text: "#292929",
+  print_text: "#111111",
+  print_line: "#DDDDDD",
+  print_bg: "#FFFFFF"
 };
+
 const pumpQuestionIds = [
   "bomba_biocida_inorganico",
   "bomba_biocida_organico",
   "bomba_controlo_ph",
   "bomba_inibidor"
 ];
+
 const probeQuestionIds = ["sonda_cloro", "sonda_ph", "sonda_condutividade"];
-const circuitoOptions = [
-  "Torres",
-  "Água Quente Sanitária",
-  "Água Consumo Humano",
-  "Piscinas",
-  "Outros"
-];
-const is2Descriptions = {
-  CP10: "CP10- Sem bomba de recirculação e sem comunicação remota",
-  CP20: "CP20- Com uma bomba de recirculação e sem comunicação remota",
-  CP30: "CP30- Sem bomba de recirculação e com comunicação remota",
-  CP40: "CP40- Com uma bomba de recirculação e com Comunicação Remota",
-  CP50: "CP50- Com duas bombas de recirculação e sem comunicação remota",
-  CP60: "CP60- Com duas bombas de recirculação e com comunicação remota"
-};
 
 function keyFor(questionId, option) {
   return `${questionId}:${option}`;
-}
-
-function getNoneOption(question) {
-  return question.options.find((option) => /^(nenhum|sem)/i.test(option.trim())) ?? "";
 }
 
 function isNoneSelection(selection) {
   return /^(nenhum|sem)/i.test((selection ?? "").trim());
 }
 
-function defaultAssemblyCode(questionId, option) {
+function getNoneOption(rows) {
+  return rows.map((row) => row.option).find((option) => /^(nenhum|sem)/i.test(option.trim())) ?? "";
+}
+
+function parseCsvLine(line) {
+  const cells = [];
+  let current = "";
+  let inQuotes = false;
+
+  for (let i = 0; i < line.length; i += 1) {
+    const char = line[i];
+
+    if (char === '"') {
+      if (inQuotes && line[i + 1] === '"') {
+        current += '"';
+        i += 1;
+      } else {
+        inQuotes = !inQuotes;
+      }
+      continue;
+    }
+
+    if (char === "," && !inQuotes) {
+      cells.push(current.trim());
+      current = "";
+      continue;
+    }
+
+    current += char;
+  }
+
+  cells.push(current.trim());
+  return cells;
+}
+
+function parsePrice(value) {
+  if (!value) return 0;
+  const normalized = String(value).replace(/\s/g, "").replace("€", "").replace(",", ".");
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function parseCsv(text) {
+  const lines = text
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0);
+
+  if (lines.length === 0) return [];
+
+  const headers = parseCsvLine(lines[0]).map((h) => h.toLowerCase());
+
+  return lines
+    .slice(1)
+    .map((line) => {
+      const cells = parseCsvLine(line);
+      const row = {};
+      headers.forEach((header, index) => {
+        row[header] = cells[index] ?? "";
+      });
+
+      return {
+        ...row,
+        option: row.option ?? "",
+        price: parsePrice(row.price),
+        code: row.code ?? "",
+        description: row.description ?? ""
+      };
+    })
+    .filter((row) => row.option.length > 0);
+}
+
+function getOptionRow(questionRows, questionId, option) {
+  if (!option) return null;
+  return (questionRows[questionId] ?? []).find((row) => row.option === option) ?? null;
+}
+
+function getOptionPrice(questionRows, questionId, option) {
+  return getOptionRow(questionRows, questionId, option)?.price ?? 0;
+}
+
+function defaultAssemblyCode(questionRows, questionId, option) {
   if (questionId === "is2_modelo") {
     if ((option ?? "").trim().toLowerCase() === "nenhum") return "_";
     return option ?? "";
   }
-  return assemblyCodes[keyFor(questionId, option)] ?? "";
+  return getOptionRow(questionRows, questionId, option)?.code ?? "";
 }
 
 function formatPumpCounts(pumpCodes) {
@@ -225,6 +195,7 @@ function formatPumpCounts(pumpCodes) {
       orderedCounts.push({ code, count: 1 });
     }
   });
+
   const priority = { BDP: 0, BDC: 1 };
   orderedCounts.sort((a, b) => {
     const pa = priority[a.code] ?? 99;
@@ -232,6 +203,7 @@ function formatPumpCounts(pumpCodes) {
     if (pa !== pb) return pa - pb;
     return a.code.localeCompare(b.code);
   });
+
   return orderedCounts.map((item) => `${item.count}${item.code}`).join("+");
 }
 
@@ -239,6 +211,7 @@ function formatSondaSegment(probeCodes, cloroSelection) {
   const selectedCodes = probeCodes.filter((code) => code !== "-");
   const selectedCount = selectedCodes.length;
   if (selectedCount === 0) return "";
+
   const ptCloroOptions = new Set([
     "Cloro 0-2 Reiss CS4 m0c",
     "Cloro 0-5 Reiss CS4 m0c",
@@ -248,6 +221,7 @@ function formatSondaSegment(probeCodes, cloroSelection) {
     "Cloro 0-5 Reiss AS2 m0c",
     "Cloro 0-20 Reiss AS2 m0c"
   ]);
+
   const hasPhOrCond = probeCodes[1] !== "-" || probeCodes[2] !== "-";
   const hasPtCloro = ptCloroOptions.has((cloroSelection ?? "").trim());
   const ptSuffix = hasPhOrCond || hasPtCloro ? ".PT" : "";
@@ -276,18 +250,24 @@ function resolvePortaSondasCode(probeCodes, cloroSelection) {
   const baseLetter = resolvePortaSondasBaseLetter(probeCodes);
   if (!baseLetter) return "";
 
-  const qPrefixCloroOptions = new Set([
+  const qSuffixCloroOptions = new Set([
     "Cloro 0-5 mA Reiss AS3",
     "Cloro 0-20 mA Reiss AS3",
     "Cloro 0-5 Reiss AS3 m0c",
     "Cloro 0-20 Reiss AS3 m0c"
   ]);
-  const suffix = qPrefixCloroOptions.has((cloroSelection ?? "").trim()) ? "Q" : "F";
+
+  const suffix = qSuffixCloroOptions.has((cloroSelection ?? "").trim()) ? "Q" : "F";
   return `${baseLetter}${suffix}`;
 }
 
-function needsBDW(circuito) {
-  return (circuito ?? "").trim() === "Torres";
+function isTruthyFlag(value) {
+  return ["1", "true", "yes", "sim"].includes((value ?? "").toString().trim().toLowerCase());
+}
+
+function needsBDW(questionRows, circuito) {
+  const circuitoRow = getOptionRow(questionRows, CIRCUITO_DEF.id, circuito);
+  return isTruthyFlag(circuitoRow?.bdw_enabled);
 }
 
 function money(value) {
@@ -298,47 +278,164 @@ function money(value) {
   }).format(value);
 }
 
+function applyStyleguide(rawStyleguide) {
+  const styleguide = {
+    ...DEFAULT_STYLEGUIDE,
+    ...(rawStyleguide ?? {})
+  };
+
+  const root = document.documentElement;
+  root.style.setProperty("--main-blue", styleguide.main_dark);
+  root.style.setProperty("--secondary-dark", styleguide.secondary_dark);
+  root.style.setProperty("--secondary-white", styleguide.secondary_white);
+  root.style.setProperty("--white", styleguide.off_white);
+  root.style.setProperty("--main-white", styleguide.main_white);
+  root.style.setProperty("--text-color", styleguide.text);
+  root.style.setProperty("--print-text", styleguide.print_text);
+  root.style.setProperty("--print-line", styleguide.print_line);
+  root.style.setProperty("--print-bg", styleguide.print_bg);
+
+  const encodedArrowColor = styleguide.secondary_dark.replace("#", "%23");
+  const arrowSvg = `url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='${encodedArrowColor}' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E\")`;
+  root.style.setProperty("--select-arrow-icon", arrowSvg);
+}
+
 export default function App() {
-  const [answers, setAnswers] = useState(() =>
-    Object.fromEntries(questions.map((q) => [q.id, getNoneOption(q)]))
-  );
+  const [questionRows, setQuestionRows] = useState({});
+  const [answers, setAnswers] = useState({});
   const [circuito, setCircuito] = useState("");
   const [copyMsg, setCopyMsg] = useState("");
-  const question1 = questions.slice(0, 1);
-  const questions2to5 = questions.slice(1, 5);
-  const questions6to8 = questions.slice(5, 8);
+  const [loadError, setLoadError] = useState("");
+
+  const question1 = QUESTION_DEFS.slice(0, 1);
+  const questions2to5 = QUESTION_DEFS.slice(1, 5);
+  const questions6to8 = QUESTION_DEFS.slice(5, 8);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadStyleguide() {
+      try {
+        const response = await fetch(`${import.meta.env.BASE_URL}styleguide.json`, {
+          cache: "no-store"
+        });
+        if (!response.ok) {
+          applyStyleguide(DEFAULT_STYLEGUIDE);
+          return;
+        }
+        const loadedStyleguide = await response.json();
+        if (!cancelled) {
+          applyStyleguide(loadedStyleguide);
+        }
+      } catch {
+        if (!cancelled) {
+          applyStyleguide(DEFAULT_STYLEGUIDE);
+        }
+      }
+    }
+
+    loadStyleguide();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadQuestionData() {
+      try {
+        const defs = [...QUESTION_DEFS, CIRCUITO_DEF, PORTA_SONDAS_DEF, BDW_DEF];
+        const loaded = await Promise.all(
+          defs.map(async (def) => {
+            const response = await fetch(`${import.meta.env.BASE_URL}questions/${def.csvFile}`, {
+              cache: "no-store"
+            });
+            if (!response.ok) {
+              throw new Error(`Failed to load ${def.csvFile}`);
+            }
+            const csvText = await response.text();
+            return [def.id, parseCsv(csvText)];
+          })
+        );
+
+        if (!cancelled) {
+          setQuestionRows(Object.fromEntries(loaded));
+          setLoadError("");
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setLoadError("Erro ao carregar CSVs das perguntas.");
+        }
+      }
+    }
+
+    loadQuestionData();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (Object.keys(questionRows).length === 0) return;
+
+    setAnswers((prev) => {
+      const next = {};
+      QUESTION_DEFS.forEach((q) => {
+        const options = (questionRows[q.id] ?? []).map((row) => row.option);
+        if (prev[q.id] && options.includes(prev[q.id])) {
+          next[q.id] = prev[q.id];
+        } else {
+          next[q.id] = getNoneOption(questionRows[q.id] ?? []);
+        }
+      });
+      return next;
+    });
+
+    setCircuito((prev) => {
+      const options = (questionRows[CIRCUITO_DEF.id] ?? []).map((row) => row.option);
+      return prev && options.includes(prev) ? prev : "";
+    });
+  }, [questionRows]);
 
   const total = useMemo(() => {
-    const baseTotal = questions.reduce((sum, q) => {
+    const baseTotal = QUESTION_DEFS.reduce((sum, q) => {
       const selected = answers[q.id];
-      return sum + (prices[keyFor(q.id, selected)] ?? 0);
+      return sum + getOptionPrice(questionRows, q.id, selected);
     }, 0);
+
     const probeCodes = probeQuestionIds.map((questionId) => {
       const option = answers[questionId] ?? "";
-      return (defaultAssemblyCode(questionId, option) ?? "-").trim() || "-";
+      return (defaultAssemblyCode(questionRows, questionId, option) ?? "-").trim() || "-";
     });
+
     const portaSondasCode = resolvePortaSondasCode(probeCodes, answers.sonda_cloro);
-    const bdwTotal = needsBDW(circuito) ? bdwPrice : 0;
-    return baseTotal + (portaSondasPrices[portaSondasCode] ?? 0) + bdwTotal;
-  }, [answers, circuito]);
+    const portaSondasTotal = getOptionPrice(questionRows, PORTA_SONDAS_DEF.id, portaSondasCode);
+    const bdwTotal = needsBDW(questionRows, circuito)
+      ? getOptionPrice(questionRows, BDW_DEF.id, "BDW")
+      : 0;
+    return baseTotal + portaSondasTotal + bdwTotal;
+  }, [answers, circuito, questionRows]);
 
   const detailedRows = useMemo(() => {
-    const baseRows = questions.map((q) => {
+    const baseRows = QUESTION_DEFS.map((q) => {
       const selection = answers[q.id] ?? "";
-      const code = defaultAssemblyCode(q.id, selection) || "-";
-      const pvp = prices[keyFor(q.id, selection)] ?? 0;
+      const code = defaultAssemblyCode(questionRows, q.id, selection) || "-";
       return {
         id: q.id,
         question: q.detailLabel ?? q.id,
         selection,
-        code,
-        pvp
+        code
       };
     });
+
     const probeCodes = probeQuestionIds.map((questionId) => {
       const option = answers[questionId] ?? "";
-      return (defaultAssemblyCode(questionId, option) ?? "-").trim() || "-";
+      return (defaultAssemblyCode(questionRows, questionId, option) ?? "-").trim() || "-";
     });
+
     const portaSondasCode = resolvePortaSondasCode(probeCodes, answers.sonda_cloro);
     if (!portaSondasCode) return baseRows;
 
@@ -348,22 +445,24 @@ export default function App() {
         id: "porta-sondas",
         question: "Porta-Sondas",
         selection: "Automático",
-        code: portaSondasCode,
-        pvp: portaSondasPrices[portaSondasCode] ?? 0
+        code: portaSondasCode
       }
     ];
-    if (needsBDW(circuito)) {
+
+    if (needsBDW(questionRows, circuito)) {
       rows.push({
         id: "bdw",
         question: "Circuito",
         selection: circuito,
-        code: "BDW",
-        pvp: bdwPrice
+        code: "BDW"
       });
     }
+
     return rows;
-  }, [answers, circuito]);
+  }, [answers, circuito, questionRows]);
+
   const detailedRowsWithValue = detailedRows.filter((row) => !isNoneSelection(row.selection));
+
   const printedAt = useMemo(
     () =>
       new Intl.DateTimeFormat("pt-PT", {
@@ -376,26 +475,29 @@ export default function App() {
 
   const assemblyLine = useMemo(() => {
     const modelOption = answers.is2_modelo ?? "";
-    const modelCode = (defaultAssemblyCode("is2_modelo", modelOption) ?? "-").trim() || "-";
+    const modelCode =
+      (defaultAssemblyCode(questionRows, "is2_modelo", modelOption) ?? "-").trim() || "-";
 
     const pumpCodes = pumpQuestionIds
       .map((questionId) => {
         const option = answers[questionId] ?? "";
-        return (defaultAssemblyCode(questionId, option) ?? "-").trim() || "-";
+        return (defaultAssemblyCode(questionRows, questionId, option) ?? "-").trim() || "-";
       })
       .filter((code) => code !== "-");
+
     const dosingSegment = pumpCodes.length > 0 ? `D${formatPumpCounts(pumpCodes)}` : "_";
 
     const probeCodes = probeQuestionIds.map((questionId) => {
       const option = answers[questionId] ?? "";
-      return (defaultAssemblyCode(questionId, option) ?? "-").trim() || "-";
+      return (defaultAssemblyCode(questionRows, questionId, option) ?? "-").trim() || "-";
     });
+
     const sondaSegment = formatSondaSegment(probeCodes, answers.sonda_cloro);
     const portaSondasCode = resolvePortaSondasCode(probeCodes, answers.sonda_cloro);
-    const bdwSegment = needsBDW(circuito) ? "BDW" : "";
+    const bdwSegment = needsBDW(questionRows, circuito) ? "BDW" : "";
 
     return [
-      `${assemblyTags.is2_modelo}.${modelCode}`,
+      `MDC_iS.${modelCode}`,
       dosingSegment,
       sondaSegment,
       portaSondasCode,
@@ -403,7 +505,17 @@ export default function App() {
     ]
       .filter(Boolean)
       .join("_");
-  }, [answers, circuito]);
+  }, [answers, circuito, questionRows]);
+
+  const is2Description = useMemo(() => {
+    const selected = answers.is2_modelo;
+    return getOptionRow(questionRows, "is2_modelo", selected)?.description ?? "";
+  }, [answers.is2_modelo, questionRows]);
+
+  const circuitoOptions = useMemo(
+    () => (questionRows[CIRCUITO_DEF.id] ?? []).map((row) => row.option),
+    [questionRows]
+  );
 
   const copyToClipboard = async (text) => {
     try {
@@ -423,196 +535,202 @@ export default function App() {
   return (
     <main className="page">
       <div className="screenOnly">
-      <section className="card headerCard">
-        <div className="headerRow">
-          <div>
-            <h1>Selecionador do modelo de MDC</h1>
+        <section className="card headerCard">
+          <div className="headerRow">
+            <div>
+              <h1>Selecionador do modelo de MDC</h1>
+            </div>
+            <img className="headerLogo" src={logo} alt="Logo" />
           </div>
-          <img className="headerLogo" src={logo} alt="Logo" />
-        </div>
-      </section>
+        </section>
 
-      <div className="cardsRow">
-        <section className="card questionCard">
-          <h2>Modelo</h2>
-          <div className="grid">
-            {question1.map((q) => (
-              <label key={q.id} className="wide">
-                {q.label}
-                <select
-                  value={answers[q.id] ?? ""}
-                  onChange={(e) =>
-                    setAnswers((prev) => ({
-                      ...prev,
-                      [q.id]: e.target.value
-                    }))
-                  }
-                >
-                  {q.options.map((option) => (
-                    <option key={option} value={option}>
-                      {option}
-                    </option>
-                  ))}
-                </select>
-                {answers[q.id] && is2Descriptions[answers[q.id]] ? (
-                  <p className="muted">{is2Descriptions[answers[q.id]]}</p>
-                ) : null}
-                <div className="wide circuitoField">
-                  <span>Circuito</span>
-                  <select value={circuito} onChange={(e) => setCircuito(e.target.value)}>
-                    <option value="">Seleccionar</option>
-                    {circuitoOptions.map((option) => (
-                      <option key={option} value={option}>
-                        {option}
+        <div className="cardsRow">
+          <section className="card questionCard">
+            <h2>Modelo</h2>
+            <div className="grid">
+              {question1.map((q) => (
+                <label key={q.id} className="wide">
+                  <span className="is2Label">
+                    IS<sub>2</sub>
+                  </span>
+                  <select
+                    value={answers[q.id] ?? ""}
+                    onChange={(e) =>
+                      setAnswers((prev) => ({
+                        ...prev,
+                        [q.id]: e.target.value
+                      }))
+                    }
+                  >
+                    {(questionRows[q.id] ?? []).map((row) => (
+                      <option key={row.option} value={row.option}>
+                        {row.option}
                       </option>
                     ))}
                   </select>
-                </div>
-              </label>
-            ))}
-          </div>
-        </section>
 
-        <section className="card questionCard">
-          <h2>Bombas</h2>
-          <div className="grid">
-            {questions2to5.map((q) => (
-              <label key={q.id} className="wide">
-                {q.label}
-                <select
-                  value={answers[q.id] ?? ""}
-                  onChange={(e) =>
-                    setAnswers((prev) => ({
-                      ...prev,
-                      [q.id]: e.target.value
-                    }))
-                  }
-                >
-                  {q.options.map((option) => (
-                    <option key={option} value={option}>
-                      {option}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            ))}
-          </div>
-        </section>
+                  {is2Description ? <p className="muted">{is2Description}</p> : null}
 
-        <section className="card questionCard">
-          <h2>Sondas</h2>
-          <div className="grid">
-            {questions6to8.map((q) => (
-              <label key={q.id} className="wide">
-                {q.label}
-                <select
-                  value={answers[q.id] ?? ""}
-                  onChange={(e) =>
-                    setAnswers((prev) => ({
-                      ...prev,
-                      [q.id]: e.target.value
-                    }))
-                  }
-                >
-                  {q.options.map((option) => (
-                    <option key={option} value={option}>
-                      {option}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            ))}
-          </div>
-        </section>
-      </div>
-
-      <section className="card">
-        <h2>Resumo</h2>
-        <div className="summaryList">
-          <div className="summaryRow">
-            <span className="summaryLabel">Valor estimado</span>
-            <div className="summaryValueWrap">
-              <strong className="summaryValue">{money(total)}</strong>
-              <button
-                className="copyIconButton"
-                onClick={() => copyToClipboard(money(total))}
-                aria-label="Copiar valor estimado"
-                title="Copiar"
-              >
-                ⧉
-              </button>
+                  <div className="wide circuitoField">
+                    <span>Circuito</span>
+                    <select value={circuito} onChange={(e) => setCircuito(e.target.value)}>
+                      <option value="">Seleccionar</option>
+                      {circuitoOptions.map((option) => (
+                        <option key={option} value={option}>
+                          {option}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </label>
+              ))}
             </div>
-          </div>
+          </section>
 
-          <div className="summaryRow">
-            <span className="summaryLabel">Referência MDC</span>
-            <div className="summaryValueWrap">
-              <strong className="summaryValue">{assemblyLine}</strong>
-              <button
-                className="copyIconButton"
-                onClick={() => copyToClipboard(assemblyLine)}
-                aria-label="Copiar referência MDC"
-                title="Copiar"
-              >
-                ⧉
-              </button>
+          <section className="card questionCard">
+            <h2>Bombas</h2>
+            <div className="grid">
+              {questions2to5.map((q) => (
+                <label key={q.id} className="wide">
+                  {q.label}
+                  <select
+                    value={answers[q.id] ?? ""}
+                    onChange={(e) =>
+                      setAnswers((prev) => ({
+                        ...prev,
+                        [q.id]: e.target.value
+                      }))
+                    }
+                  >
+                    {(questionRows[q.id] ?? []).map((row) => (
+                      <option key={row.option} value={row.option}>
+                        {row.option}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ))}
             </div>
-          </div>
+          </section>
+
+          <section className="card questionCard">
+            <h2>Sondas</h2>
+            <div className="grid">
+              {questions6to8.map((q) => (
+                <label key={q.id} className="wide">
+                  {q.label}
+                  <select
+                    value={answers[q.id] ?? ""}
+                    onChange={(e) =>
+                      setAnswers((prev) => ({
+                        ...prev,
+                        [q.id]: e.target.value
+                      }))
+                    }
+                  >
+                    {(questionRows[q.id] ?? []).map((row) => (
+                      <option key={row.option} value={row.option}>
+                        {row.option}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              ))}
+            </div>
+          </section>
         </div>
-        {copyMsg ? <p className="copyStatus muted">{copyMsg}</p> : null}
-      </section>
 
-      <section className="card">
-        <h2>Detalhado</h2>
-        <div className="tableWrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Item</th>
-                <th>Selecção</th>
-                <th>Código</th>
-              </tr>
-            </thead>
-            <tbody>
-              {detailedRowsWithValue.length === 0 ? (
+        <section className="card">
+          <h2>Resumo</h2>
+          <div className="summaryList">
+            <div className="summaryRow">
+              <span className="summaryLabel">Valor estimado</span>
+              <div className="summaryValueWrap">
+                <strong className="summaryValue">{money(total)}</strong>
+                <button
+                  className="copyIconButton"
+                  onClick={() => copyToClipboard(money(total))}
+                  aria-label="Copiar valor estimado"
+                  title="Copiar"
+                >
+                  ⧉
+                </button>
+              </div>
+            </div>
+
+            <div className="summaryRow">
+              <span className="summaryLabel">Referência MDC</span>
+              <div className="summaryValueWrap">
+                <strong className="summaryValue">{assemblyLine}</strong>
+                <button
+                  className="copyIconButton"
+                  onClick={() => copyToClipboard(assemblyLine)}
+                  aria-label="Copiar referência MDC"
+                  title="Copiar"
+                >
+                  ⧉
+                </button>
+              </div>
+            </div>
+          </div>
+          {loadError ? <p className="copyStatus muted">{loadError}</p> : null}
+          {copyMsg ? <p className="copyStatus muted">{copyMsg}</p> : null}
+        </section>
+
+        <section className="card">
+          <h2>Detalhado</h2>
+          <div className="tableWrap">
+            <table>
+              <thead>
                 <tr>
-                  <td colSpan="3" className="muted">
-                    Sem componentes selecionados.
-                  </td>
+                  <th>Item</th>
+                  <th>Selecção</th>
+                  <th>Código</th>
                 </tr>
-              ) : (
-                detailedRowsWithValue.map((row) => (
-                  <tr key={row.id}>
-                    <td>{row.question}</td>
-                    <td>{row.selection}</td>
-                    <td>{row.code}</td>
+              </thead>
+              <tbody>
+                {detailedRowsWithValue.length === 0 ? (
+                  <tr>
+                    <td colSpan="3" className="muted">
+                      Sem componentes selecionados.
+                    </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </section>
+                ) : (
+                  detailedRowsWithValue.map((row) => (
+                    <tr key={row.id}>
+                      <td>{row.question}</td>
+                      <td>{row.selection}</td>
+                      <td>{row.code}</td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </section>
 
-      <section className="card printActions">
-        <button className="primary" onClick={printBudget}>
-          Imprimir / Guardar PDF
-        </button>
-      </section>
+        <section className="card printActions">
+          <button className="primary" onClick={printBudget}>
+            Imprimir / Guardar PDF
+          </button>
+        </section>
 
-      <footer className="footer">
-        © 2026{" "}
-        <a href="https://paperpushers.biz" target="_blank" rel="noreferrer">
-          PaperPushers
-        </a>
-      </footer>
+        <footer className="footer">
+          © 2026{" "}
+          <a href="https://paperpushers.biz" target="_blank" rel="noreferrer">
+            PaperPushers
+          </a>
+        </footer>
       </div>
 
       <section className="printOnly printSheet">
         <header className="printHeader">
           <div className="printCompany">
             <p>Watercare, Tratamento de Águas Lda</p>
-            <p>Centro Empresarial de Alverca, Estrada Nacional 10, A5, 2615-187 Alverca do Ribatejo</p>
+            <p>
+              Centro Empresarial de Alverca, Estrada Nacional 10, A5, 2615-187 Alverca do
+              Ribatejo
+            </p>
             <p>NIPC - 506550672</p>
           </div>
           <div className="printMeta">

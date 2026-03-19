@@ -1,0 +1,11 @@
+{
+  "main_dark": "#292929",
+  "secondary_dark": "#777777",
+  "secondary_white": "#D1D1D1",
+  "off_white": "#F0EEE9",
+  "main_white": "#FFFFFF",
+  "text": "#292929",
+  "print_text": "#111111",
+  "print_line": "#DDDDDD",
+  "print_bg": "#FFFFFF"
+}
