@@ -1,0 +1,95 @@
+REGRAS IMPLEMENTADAS - AGRUPAMENTO DE ITENS E CODELINE
+
+Base da referência
+- A referência começa sempre por: MDC_iS.
+- Segmento de modelo (Q1 - IS2):
+  - Se Q1 = "Nenhum" -> usa "_".
+  - Caso contrário -> usa o código da opção selecionada (normalmente CP10..CP60).
+
+Segmento de bombas (Q2..Q5)
+- Perguntas consideradas:
+  - bomba_biocida_inorganico
+  - bomba_biocida_organico
+  - bomba_controlo_ph
+  - bomba_inibidor
+- Cada resposta é convertida para código técnico via CSV (ex.: BDP, BDC, -).
+- Entradas com "-" (Sem Bombas) são ignoradas.
+- Se nenhuma bomba for selecionada -> segmento de bombas = "_".
+- Se houver bombas -> segmento começa por "D" e agrega contagens:
+  - formato: D{n}BDP+{m}BDC
+  - exemplo: D2BDP+1BDC
+- Ordem forçada: BDP aparece sempre antes de BDC.
+
+Segmento de sondas (Q6..Q8)
+- Perguntas consideradas:
+  - sonda_cloro
+  - sonda_ph
+  - sonda_condutividade
+- Cada resposta é convertida para código técnico via CSV (ex.: Cl5mA, pH, CD, -).
+- Entradas com "-" (Sem sonda...) são ignoradas.
+- Se nenhuma sonda for selecionada -> este segmento é omitido.
+- Se houver sondas -> formato:
+  - M# COD1/COD2/COD3
+  - # = número de sondas selecionadas (1, 2 ou 3)
+  - Só entram os códigos existentes (sem placeholders).
+- Sufixo .PT no segmento de sondas:
+  - Adiciona ".PT" uma única vez quando:
+    - existe sonda de pH, OU
+    - existe sonda de condutividade, OU
+    - a sonda de cloro é uma das versões m0c abaixo:
+      - Cloro 0-2 Reiss CS4 m0c
+      - Cloro 0-5 Reiss CS4 m0c
+      - Cloro 0-10 Reiss CS4 m0c
+      - Cloro 0-5 Reiss AS3 m0c
+      - Cloro 0-20 Reiss AS3 m0c
+      - Cloro 0-5 Reiss AS2 m0c
+      - Cloro 0-20 Reiss AS2 m0c
+
+Porta-Sondas (automático, não escolhido pelo utilizador)
+- Só é calculado se existir pelo menos uma sonda selecionada.
+- Letra base depende da combinação de sondas:
+  - A: só cloro
+  - B: cloro + 1 das outras
+  - C: cloro + pH + condutividade
+  - D: pH + condutividade (sem cloro)
+  - F: só pH OU só condutividade
+- Sufixo final (Q/F) depende da sonda de cloro:
+  - Q se cloro selecionado for uma destas:
+    - Cloro 0-5 mA Reiss AS3
+    - Cloro 0-20 mA Reiss AS3
+    - Cloro 0-5 Reiss AS3 m0c
+    - Cloro 0-20 Reiss AS3 m0c
+  - F em todos os restantes casos (ou sem cloro)
+- Código final de Porta-Sondas = {base}{sufixo}
+  - exemplos: AF, BQ, CF, DF, FF
+- Este código entra no codeline como um segmento próprio.
+
+Regra BDW
+- O segmento BDW é ativado pela coluna `bdw_enabled` na linha selecionada em `circuito.csv`.
+- Se `bdw_enabled` for verdade (ex.: `1`, `true`, `yes`, `sim`) -> adicionar segmento `BDW`.
+- Se `bdw_enabled` for falso (ex.: `0`) -> não adicionar BDW.
+
+Formato final do codeline
+- Segmentos unidos por underscore "_".
+- Estrutura geral:
+  MDC_iS.{MODELO}_{BOMBAS}_{SONDAS}_{PORTA-SONDAS}_{BDW}
+- Segmentos vazios são omitidos; apenas MODELO e BOMBAS são sempre presentes
+  (quando não há valor, cada um usa "_" conforme regras acima).
+
+Resumo de preços (como está hoje)
+- Todos os preços vêm de CSV (não existem preços hardcoded no código).
+- Q1..Q8: preços nos respetivos ficheiros de pergunta.
+- Porta-Sondas: preços em `porta_sondas.csv`.
+- BDW: preço em `bdw.csv`.
+- Ficheiros de suporte usados para lógica:
+  - `circuito.csv`: opções de circuito + flag `bdw_enabled` que controla entrada de BDW.
+  - `porta_sondas.csv`: pares código/preço de Porta-Sondas.
+  - `bdw.csv`: código/preço do item BDW.
+
+Notas técnicas
+- Detecção de "não selecionado" usa prefixo textual "Sem" ou "Nenhum".
+- Na tabela "Detalhado" do ecrã, linhas com seleção "Sem/Nenhum" são ocultadas.
+- Algumas regras dependem de texto literal da opção no CSV (match exato):
+  - lista de cloro m0c que ativa sufixo `.PT`;
+  - lista de cloro AS3 que força sufixo `Q` no Porta-Sondas;
+  - nomes de opções de cloro usados nas listas acima.
