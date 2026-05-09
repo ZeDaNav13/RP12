@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "generate:combinations": "node scripts/generate-combinations.mjs",
     "preview": "vite preview"
   },
   "dependencies": {

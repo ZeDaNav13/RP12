@@ -1,6 +1,6 @@
-option,bdw_enabled
-Torres,1
-Água Quente Sanitária,0
-Água Consumo Humano,0
-Piscinas,0
-Outros,0
+option,bdw_enabled,description
+Circuito Aberto de Arrefecimento,1,Torre de Arrefecimento / Condensador Evaporativo
+Água Quente Sanitária,0,
+Água Consumo Humano,0,
+Piscinas,0,
+Outros,0,

@@ -68,6 +68,52 @@ Regra BDW
 - O segmento BDW é ativado pela coluna `bdw_enabled` na linha selecionada em `circuito.csv`.
 - Se `bdw_enabled` for verdade (ex.: `1`, `true`, `yes`, `sim`) -> adicionar segmento `BDW`.
 - Se `bdw_enabled` for falso (ex.: `0`) -> não adicionar BDW.
+- A coluna `description` em `circuito.csv` pode mostrar texto explicativo abaixo do dropdown.
+
+Regra de visibilidade por circuito
+- Se o circuito selecionado for "Circuito Aberto de Arrefecimento":
+  - aparece uma seleção obrigatória entre "Água Limpa" e "Água Suja";
+  - no dropdown `sonda_cloro`, "Água Limpa" mostra apenas opções cujo texto contém "CS4";
+  - no dropdown `sonda_cloro`, "Água Suja" mostra apenas opções cujo texto contém "AS2";
+  - as opções "Sem..." continuam disponíveis;
+  - esta seleção é visual e não altera preço/codeline.
+- Se o circuito selecionado for "Água Quente Sanitária":
+  - o dropdown `sonda_cloro` mostra apenas opções cujo texto contém "AS3";
+  - as opções "Sem..." continuam disponíveis.
+- Em todos os restantes circuitos sem regra específica:
+  - o dropdown `sonda_cloro` mostra apenas opções cujo texto contém "CS4";
+  - as opções "Sem..." continuam disponíveis.
+- `sonda_ph` e `sonda_condutividade` mostram sempre todas as opções.
+- Se uma sonda de cloro já selecionada deixar de ser válida, é reposta para a opção "Sem..." desse dropdown.
+
+Referência PHC
+- A referência PHC aparece no Resumo abaixo da referência MDC.
+- A sequência começa em:
+  534.iS200000000001
+- Cada combinação válida incrementa 1.
+- A ordem da sequência segue o export `all_reply_combinations_filtered.csv`.
+- Combinações sem modelo IS2 e sem circuito não entram no export.
+- Para bombas, só conta a combinação agregada por quantidade:
+  - número de BDP;
+  - número de BDC;
+  - número de Sem Bombas.
+- A ordem/pergunta específica onde cada bomba é escolhida não cria nova referência PHC.
+
+Export completo de combinações
+- Gerar com:
+  npm run generate:combinations
+- Ficheiro gerado:
+  all_reply_combinations_filtered.csv
+- O export inclui:
+  - referencia_phc;
+  - modelo IS2, códigos e preço;
+  - combinação agregada de bombas, códigos e preço;
+  - sondas, códigos e preços;
+  - circuito e tipo de água, quando aplicável;
+  - porta-sondas automático;
+  - BDW, quando aplicável;
+  - assembly_code;
+  - total_price.
 
 Formato final do codeline
 - Segmentos unidos por underscore "_".
@@ -79,6 +125,7 @@ Formato final do codeline
 Resumo de preços (como está hoje)
 - Todos os preços vêm de CSV (não existem preços hardcoded no código).
 - Q1..Q8: preços nos respetivos ficheiros de pergunta.
+- Bombas podem mostrar texto explicativo pela coluna `description`.
 - Porta-Sondas: preços em `porta_sondas.csv`.
 - BDW: preço em `bdw.csv`.
 - Ficheiros de suporte usados para lógica:
@@ -89,6 +136,8 @@ Resumo de preços (como está hoje)
 Notas técnicas
 - Detecção de "não selecionado" usa prefixo textual "Sem" ou "Nenhum".
 - Na tabela "Detalhado" do ecrã, linhas com seleção "Sem/Nenhum" são ocultadas.
+- No Resumo, o preço começa oculto como "---"; o ícone de olho revela o preço e depois fica disponível o ícone de copiar.
+- Se o preço estiver oculto ao imprimir, o PDF não mostra o preço.
 - Algumas regras dependem de texto literal da opção no CSV (match exato):
   - lista de cloro m0c que ativa sufixo `.PT`;
   - lista de cloro AS3 que força sufixo `Q` no Porta-Sondas;

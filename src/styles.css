@@ -163,6 +163,19 @@ h2 {
   color: var(--text-color);
 }
 
+.fieldLabel,
+.is2Label {
+  color: var(--main-blue);
+  font-weight: 600;
+}
+
+.questionCard .muted {
+  margin: 0;
+  font-size: 0.82rem;
+  font-weight: 400;
+  line-height: 1.35;
+}
+
 .grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -185,6 +198,33 @@ label {
 .circuitoField {
   display: grid;
   gap: 0.3rem;
+  margin-top: 1.35rem;
+}
+
+.circuitoField .muted + .segmentedControl {
+  margin-top: 1rem;
+}
+
+.segmentedControl {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  padding: 7px;
+  border-radius: 8px;
+  background: var(--secondary-white);
+}
+
+.segmentedControl button {
+  min-width: 0;
+  padding: 12px 10px;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--main-blue);
+}
+
+.segmentedControl button.active {
+  background: var(--secondary-dark);
+  color: var(--main-white);
 }
 
 input,
@@ -294,6 +334,7 @@ button {
   display: flex;
   align-items: center;
   justify-content: flex-end;
+  flex-wrap: wrap;
   gap: 0.8rem;
   min-width: 0;
 }
@@ -317,6 +358,21 @@ button {
   padding: 0;
   font-size: 1.25rem;
   line-height: 1;
+}
+
+.copyIconButton:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.summaryIcon {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .copyStatus {
@@ -533,6 +589,7 @@ td {
   .printSheet {
     font-family: "Poppins", sans-serif;
     color: var(--print-text);
+    padding-top: 12mm;
   }
 
   .printHeader {
@@ -571,7 +628,22 @@ td {
   }
 
   .printMeta {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 14px;
     text-align: right;
+  }
+
+  .printTitleBlock {
+    display: grid;
+    gap: 6px;
+    min-width: 0;
+  }
+
+  .printTitleBlock h1,
+  .printTitleBlock h2 {
+    margin: 0;
   }
 
   .printLogo {
@@ -581,6 +653,8 @@ td {
 
   .printSummary {
     margin: 0 0 14px;
+    border-bottom: 1px solid var(--print-line);
+    padding-bottom: 12px;
   }
 
   .printSummary p,

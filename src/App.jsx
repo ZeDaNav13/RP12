@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import logo from "../is2_logo.png";
+import logo from "./assets/Logo_iS2-removebg-preview.png";
+import printLogo from "./assets/iS2 Logo Fundo Branco.png";
 
 const QUESTION_DEFS = [
   {
@@ -87,6 +88,17 @@ const pumpQuestionIds = [
 ];
 
 const probeQuestionIds = ["sonda_cloro", "sonda_ph", "sonda_condutividade"];
+const OPEN_COOLING_CIRCUIT = "Circuito Aberto de Arrefecimento";
+const SANITARY_HOT_WATER_CIRCUIT = "Água Quente Sanitária";
+const openCoolingWaterTypes = ["Água Limpa", "Água Suja"];
+const PHC_REFERENCE_PREFIX = "534.iS2";
+const PHC_REFERENCE_START = 1n;
+const PHC_REFERENCE_WIDTH = 11;
+
+function phcReferenceForIndex(index) {
+  const number = PHC_REFERENCE_START + BigInt(index);
+  return `${PHC_REFERENCE_PREFIX}${String(number).padStart(PHC_REFERENCE_WIDTH, "0")}`;
+}
 
 function keyFor(questionId, option) {
   return `${questionId}:${option}`;
@@ -98,6 +110,22 @@ function isNoneSelection(selection) {
 
 function getNoneOption(rows) {
   return rows.map((row) => row.option).find((option) => /^(nenhum|sem)/i.test(option.trim())) ?? "";
+}
+
+function isProbeOptionVisibleForCircuit(circuito, openCoolingWaterType, option) {
+  if (isNoneSelection(option)) return true;
+  if (circuito === OPEN_COOLING_CIRCUIT) {
+    return openCoolingWaterType === "Água Suja" ? /\bAS2\b/i.test(option) : /\bCS4\b/i.test(option);
+  }
+  if (circuito === SANITARY_HOT_WATER_CIRCUIT) return /\bAS3\b/i.test(option);
+  return /\bCS4\b/i.test(option);
+}
+
+function getProbeRowsForCircuit(rows, questionId, circuito, openCoolingWaterType) {
+  if (questionId !== "sonda_cloro") return rows;
+  return rows.filter((row) =>
+    isProbeOptionVisibleForCircuit(circuito, openCoolingWaterType, row.option)
+  );
 }
 
 function parseCsvLine(line) {
@@ -270,6 +298,111 @@ function needsBDW(questionRows, circuito) {
   return isTruthyFlag(circuitoRow?.bdw_enabled);
 }
 
+function buildCircuitVariants(questionRows) {
+  return (questionRows[CIRCUITO_DEF.id] ?? [])
+    .filter((row) => !isNoneSelection(row.option))
+    .flatMap((circuitoRow) => {
+      if (circuitoRow.option !== OPEN_COOLING_CIRCUIT) {
+        return [{ circuito: circuitoRow.option, openCoolingWaterType: "" }];
+      }
+
+      return openCoolingWaterTypes.map((type) => ({
+        circuito: circuitoRow.option,
+        openCoolingWaterType: type
+      }));
+    });
+}
+
+function getPumpCombinationIndex(proportionalCount, constantCount) {
+  let index = 0;
+
+  for (let p = 0; p <= 4; p += 1) {
+    for (let c = 0; c <= 4 - p; c += 1) {
+      if (p === proportionalCount && c === constantCount) return index;
+      index += 1;
+    }
+  }
+
+  return -1;
+}
+
+function countProbeCombinations(questionRows, circuito, openCoolingWaterType) {
+  return probeQuestionIds.reduce((total, questionId) => {
+    const rows = getProbeRowsForCircuit(
+      questionRows[questionId] ?? [],
+      questionId,
+      circuito,
+      openCoolingWaterType
+    );
+    return total * rows.length;
+  }, 1);
+}
+
+function getPhcReference(questionRows, answers, circuito, openCoolingWaterType) {
+  if (!circuito || isNoneSelection(answers.is2_modelo)) return "-";
+
+  const modelRows = (questionRows.is2_modelo ?? []).filter((row) => !isNoneSelection(row.option));
+  const modelIndex = modelRows.findIndex((row) => row.option === answers.is2_modelo);
+  if (modelIndex < 0) return "-";
+
+  let proportionalCount = 0;
+  let constantCount = 0;
+  for (const questionId of pumpQuestionIds) {
+    const code =
+      (defaultAssemblyCode(questionRows, questionId, answers[questionId]) ?? "-").trim() || "-";
+    if (code === "BDP") proportionalCount += 1;
+    if (code === "BDC") constantCount += 1;
+  }
+
+  const pumpCombinationIndex = getPumpCombinationIndex(proportionalCount, constantCount);
+  if (pumpCombinationIndex < 0) return "-";
+
+  const circuitVariants = buildCircuitVariants(questionRows);
+  const activeOpenCoolingWaterType =
+    circuito === OPEN_COOLING_CIRCUIT ? openCoolingWaterType : "";
+  const circuitIndex = circuitVariants.findIndex(
+    (variant) =>
+      variant.circuito === circuito && variant.openCoolingWaterType === activeOpenCoolingWaterType
+  );
+  if (circuitIndex < 0) return "-";
+
+  const probeRows = probeQuestionIds.map((questionId) =>
+    getProbeRowsForCircuit(
+      questionRows[questionId] ?? [],
+      questionId,
+      circuito,
+      activeOpenCoolingWaterType
+    )
+  );
+  const probeIndexes = probeQuestionIds.map((questionId, index) =>
+    probeRows[index].findIndex((row) => row.option === answers[questionId])
+  );
+  if (probeIndexes.some((index) => index < 0)) return "-";
+
+  const combinationsPerCircuitSet = circuitVariants.reduce(
+    (sum, variant) =>
+      sum + countProbeCombinations(questionRows, variant.circuito, variant.openCoolingWaterType),
+    0
+  );
+  const combinationsBeforeCircuit = circuitVariants
+    .slice(0, circuitIndex)
+    .reduce(
+      (sum, variant) =>
+        sum + countProbeCombinations(questionRows, variant.circuito, variant.openCoolingWaterType),
+      0
+    );
+  const [cloroRows, phRows, condRows] = probeRows;
+  const [cloroIndex, phIndex, condIndex] = probeIndexes;
+  const probeIndex = cloroIndex * phRows.length * condRows.length + phIndex * condRows.length + condIndex;
+  const combinationIndex =
+    modelIndex * 15 * combinationsPerCircuitSet +
+    pumpCombinationIndex * combinationsPerCircuitSet +
+    combinationsBeforeCircuit +
+    probeIndex;
+
+  return phcReferenceForIndex(combinationIndex);
+}
+
 function money(value) {
   return new Intl.NumberFormat("pt-PT", {
     style: "currency",
@@ -304,6 +437,8 @@ export default function App() {
   const [questionRows, setQuestionRows] = useState({});
   const [answers, setAnswers] = useState({});
   const [circuito, setCircuito] = useState("");
+  const [openCoolingWaterType, setOpenCoolingWaterType] = useState(openCoolingWaterTypes[0]);
+  const [showPrice, setShowPrice] = useState(false);
   const [copyMsg, setCopyMsg] = useState("");
   const [loadError, setLoadError] = useState("");
 
@@ -399,6 +534,33 @@ export default function App() {
       return prev && options.includes(prev) ? prev : "";
     });
   }, [questionRows]);
+
+  useEffect(() => {
+    if (Object.keys(questionRows).length === 0) return;
+
+    setAnswers((prev) => {
+      const next = { ...prev };
+      let changed = false;
+
+      probeQuestionIds.forEach((questionId) => {
+        const visibleRows = getProbeRowsForCircuit(
+          questionRows[questionId] ?? [],
+          questionId,
+          circuito,
+          openCoolingWaterType
+        );
+        const visibleOptions = visibleRows.map((row) => row.option);
+        const selected = prev[questionId] ?? "";
+
+        if (selected && !visibleOptions.includes(selected)) {
+          next[questionId] = getNoneOption(visibleRows);
+          changed = true;
+        }
+      });
+
+      return changed ? next : prev;
+    });
+  }, [circuito, openCoolingWaterType, questionRows]);
 
   const total = useMemo(() => {
     const baseTotal = QUESTION_DEFS.reduce((sum, q) => {
@@ -507,14 +669,42 @@ export default function App() {
       .join("_");
   }, [answers, circuito, questionRows]);
 
+  const phcReference = useMemo(
+    () => getPhcReference(questionRows, answers, circuito, openCoolingWaterType),
+    [answers, circuito, openCoolingWaterType, questionRows]
+  );
+
   const is2Description = useMemo(() => {
     const selected = answers.is2_modelo;
     return getOptionRow(questionRows, "is2_modelo", selected)?.description ?? "";
   }, [answers.is2_modelo, questionRows]);
 
+  const circuitoDescription = useMemo(
+    () => getOptionRow(questionRows, CIRCUITO_DEF.id, circuito)?.description ?? "",
+    [circuito, questionRows]
+  );
+
+  const showOpenCoolingWaterType = circuito === OPEN_COOLING_CIRCUIT;
+
   const circuitoOptions = useMemo(
     () => (questionRows[CIRCUITO_DEF.id] ?? []).map((row) => row.option),
     [questionRows]
+  );
+
+  const visibleProbeRowsByQuestion = useMemo(
+    () =>
+      Object.fromEntries(
+        probeQuestionIds.map((questionId) => [
+          questionId,
+          getProbeRowsForCircuit(
+            questionRows[questionId] ?? [],
+            questionId,
+            circuito,
+            openCoolingWaterType
+          )
+        ])
+      ),
+    [circuito, openCoolingWaterType, questionRows]
   );
 
   const copyToClipboard = async (text) => {
@@ -572,7 +762,7 @@ export default function App() {
                   {is2Description ? <p className="muted">{is2Description}</p> : null}
 
                   <div className="wide circuitoField">
-                    <span>Circuito</span>
+                    <span className="fieldLabel">Circuito</span>
                     <select value={circuito} onChange={(e) => setCircuito(e.target.value)}>
                       <option value="">Seleccionar</option>
                       {circuitoOptions.map((option) => (
@@ -581,6 +771,27 @@ export default function App() {
                         </option>
                       ))}
                     </select>
+                    {circuitoDescription ? <p className="muted">{circuitoDescription}</p> : null}
+                    {showOpenCoolingWaterType ? (
+                      <div
+                        className="segmentedControl"
+                        role="radiogroup"
+                        aria-label="Tipo de água"
+                      >
+                        {openCoolingWaterTypes.map((type) => (
+                          <button
+                            key={type}
+                            type="button"
+                            className={type === openCoolingWaterType ? "active" : ""}
+                            role="radio"
+                            aria-checked={type === openCoolingWaterType}
+                            onClick={() => setOpenCoolingWaterType(type)}
+                          >
+                            {type}
+                          </button>
+                        ))}
+                      </div>
+                    ) : null}
                   </div>
                 </label>
               ))}
@@ -592,7 +803,7 @@ export default function App() {
             <div className="grid">
               {questions2to5.map((q) => (
                 <label key={q.id} className="wide">
-                  {q.label}
+                  <span className="fieldLabel">{q.label}</span>
                   <select
                     value={answers[q.id] ?? ""}
                     onChange={(e) =>
@@ -608,6 +819,11 @@ export default function App() {
                       </option>
                     ))}
                   </select>
+                  {getOptionRow(questionRows, q.id, answers[q.id])?.description ? (
+                    <p className="muted">
+                      {getOptionRow(questionRows, q.id, answers[q.id])?.description}
+                    </p>
+                  ) : null}
                 </label>
               ))}
             </div>
@@ -618,7 +834,7 @@ export default function App() {
             <div className="grid">
               {questions6to8.map((q) => (
                 <label key={q.id} className="wide">
-                  {q.label}
+                  <span className="fieldLabel">{q.label}</span>
                   <select
                     value={answers[q.id] ?? ""}
                     onChange={(e) =>
@@ -628,7 +844,7 @@ export default function App() {
                       }))
                     }
                   >
-                    {(questionRows[q.id] ?? []).map((row) => (
+                    {(visibleProbeRowsByQuestion[q.id] ?? []).map((row) => (
                       <option key={row.option} value={row.option}>
                         {row.option}
                       </option>
@@ -646,15 +862,35 @@ export default function App() {
             <div className="summaryRow">
               <span className="summaryLabel">Valor estimado</span>
               <div className="summaryValueWrap">
-                <strong className="summaryValue">{money(total)}</strong>
-                <button
-                  className="copyIconButton"
-                  onClick={() => copyToClipboard(money(total))}
-                  aria-label="Copiar valor estimado"
-                  title="Copiar"
-                >
-                  ⧉
-                </button>
+                <strong className="summaryValue">{showPrice ? money(total) : "---"}</strong>
+                {showPrice ? (
+                  <button
+                    className="copyIconButton"
+                    onClick={() => copyToClipboard(money(total))}
+                    aria-label="Copiar valor estimado"
+                    title="Copiar"
+                  >
+                    ⧉
+                  </button>
+                ) : (
+                  <button
+                    className="copyIconButton"
+                    type="button"
+                    onClick={() => setShowPrice(true)}
+                    aria-label="Mostrar valor estimado"
+                    title="Mostrar"
+                  >
+                    <svg
+                      className="summaryIcon"
+                      viewBox="0 0 24 24"
+                      aria-hidden="true"
+                      focusable="false"
+                    >
+                      <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" />
+                      <circle cx="12" cy="12" r="3" />
+                    </svg>
+                  </button>
+                )}
               </div>
             </div>
 
@@ -667,6 +903,22 @@ export default function App() {
                   onClick={() => copyToClipboard(assemblyLine)}
                   aria-label="Copiar referência MDC"
                   title="Copiar"
+                >
+                  ⧉
+                </button>
+              </div>
+            </div>
+
+            <div className="summaryRow">
+              <span className="summaryLabel">Referência PHC</span>
+              <div className="summaryValueWrap">
+                <strong className="summaryValue">{phcReference}</strong>
+                <button
+                  className="copyIconButton"
+                  onClick={() => copyToClipboard(phcReference)}
+                  aria-label="Copiar referência PHC"
+                  title="Copiar"
+                  disabled={phcReference === "-"}
                 >
                   ⧉
                 </button>
@@ -727,16 +979,19 @@ export default function App() {
         <header className="printHeader">
           <div className="printCompany">
             <p>Watercare, Tratamento de Águas Lda</p>
-            <p>
-              Centro Empresarial de Alverca, Estrada Nacional 10, A5, 2615-187 Alverca do
-              Ribatejo
-            </p>
             <p>NIPC - 506550672</p>
+            <p>Centro Empresarial de Alverca</p>
+            <p>Estrada Nacional 10, A5</p>
+            <p>
+              2615-187 Alverca do Ribatejo
+            </p>
           </div>
           <div className="printMeta">
-            <h1>Orçamento</h1>
-            <h2>Modelo MDC</h2>
-            <img className="printLogo" src={logo} alt="Logo" />
+            <div className="printTitleBlock">
+              <h1>Orçamento</h1>
+              <h2>Modelo MDC</h2>
+            </div>
+            <img className="printLogo" src={printLogo} alt="Logo" />
           </div>
         </header>
 
@@ -749,6 +1004,9 @@ export default function App() {
           </p>
           <p>
             <strong>Codeline:</strong> {assemblyLine}
+          </p>
+          <p>
+            <strong>Referência PHC:</strong> {phcReference}
           </p>
         </section>
 
@@ -774,11 +1032,13 @@ export default function App() {
           </table>
         </section>
 
-        <section className="printPrice">
-          <p>
-            <strong>Preço:</strong> {money(total)}
-          </p>
-        </section>
+        {showPrice ? (
+          <section className="printPrice">
+            <p>
+              <strong>Preço:</strong> {money(total)}
+            </p>
+          </section>
+        ) : null}
       </section>
     </main>
   );

@@ -23,9 +23,11 @@ Run before each push/deploy:
 - Cards stack cleanly with equal vertical spacing.
 
 3) Resumo card
-- Two rows are visible and joined.
+- Three rows are visible and joined: value, Referência MDC, Referência PHC.
 - Row divider is visible and correct color.
-- Value/codeline text is readable.
+- Value/codeline/PHC text is readable.
+- Price starts hidden as `---`.
+- Eye icon reveals price; after revealing, the price action becomes the copy icon.
 - Copy icons are visible, aligned, and clickable.
 
 4) Detalhado table
@@ -37,12 +39,17 @@ Run before each push/deploy:
 5) Print / PDF preview
 - Click `Imprimir / Guardar PDF`.
 - Header blocks: company info (left), orçamento/modelo/logo (right).
-- Below: modelo selecionado, data, codeline.
+- Company info appears on separate lines:
+  Watercare, Tratamento de Águas Lda / NIPC / Centro Empresarial / Estrada Nacional / postal line.
+- Orçamento / Modelo MDC and logo are vertically centered as a group.
+- Below: modelo selecionado, data, codeline, PHC reference.
+- Separator line appears between summary and detailed section.
 - Detalhado table appears.
-- `Preço` appears at end.
+- `Preço` appears at end only when price was visible before print.
 - Font sizes are readable on A4.
 
 6) Final smoke checks
 - Change several combinations and confirm total + codeline update.
+- Confirm PHC reference updates with selection changes.
 - Confirm copy buttons still copy expected values.
 - Confirm no console errors.
