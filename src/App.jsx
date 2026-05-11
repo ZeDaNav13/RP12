@@ -612,16 +612,19 @@ export default function App() {
     ];
 
     if (needsBDW(questionRows, circuito)) {
+      const circuitoSelection =
+        circuito === OPEN_COOLING_CIRCUIT ? `${circuito} - ${openCoolingWaterType}` : circuito;
+
       rows.push({
         id: "bdw",
         question: "Circuito",
-        selection: circuito,
+        selection: circuitoSelection,
         code: "BDW"
       });
     }
 
     return rows;
-  }, [answers, circuito, questionRows]);
+  }, [answers, circuito, openCoolingWaterType, questionRows]);
 
   const detailedRowsWithValue = detailedRows.filter((row) => !isNoneSelection(row.selection));
 
