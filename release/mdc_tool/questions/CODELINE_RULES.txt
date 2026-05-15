@@ -15,6 +15,7 @@ Segmento de bombas (Q2..Q5)
 - Cada resposta é convertida para código técnico via CSV (ex.: BDP, BDC, -).
 - Entradas com "-" (Sem Bombas) são ignoradas.
 - Se nenhuma bomba for selecionada -> segmento de bombas = "_".
+- É obrigatória pelo menos uma sonda para gerar preço/referência, com ou sem bombas.
 - Se houver bombas -> segmento começa por "D" e agrega contagens:
   - formato: D{n}BDP+{m}BDC
   - exemplo: D2BDP+1BDC
@@ -90,9 +91,11 @@ Referência PHC
 - A referência PHC aparece no Resumo abaixo da referência MDC.
 - A sequência começa em:
   534.iS200000000001
-- Cada combinação válida incrementa 1.
+- Cada `assembly_code` único incrementa 1.
 - A ordem da sequência segue o export `all_reply_combinations_filtered.csv`.
 - Combinações sem modelo IS2 e sem circuito não entram no export.
+- Combinações sem qualquer sonda não entram no export.
+- Se várias escolhas produzirem o mesmo `assembly_code`, só a primeira entra no export e a referência PHC é a mesma.
 - Para bombas, só conta a combinação agregada por quantidade:
   - número de BDP;
   - número de BDC;
@@ -114,6 +117,7 @@ Export completo de combinações
   - BDW, quando aplicável;
   - assembly_code;
   - total_price.
+- O export não pode conter `assembly_code` repetido.
 
 Formato final do codeline
 - Segmentos unidos por underscore "_".
