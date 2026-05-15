@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-05-15
+- Added final export rule: every valid priced combination must include at least one sonda.
+- Made `assembly_code` the unique key for PHC reference generation.
+- Regenerated `all_reply_combinations_filtered.csv` with no repeated `assembly_code` rows.
+- Updated PHC sequencing to increment only by unique assembly line code.
+
 ## 2026-05-09
 - Updated model/circuit/probe restrictions, including `Circuito Aberto de Arrefecimento` with `Água Limpa`/`Água Suja`.
 - Kept pH and conductivity probe options unrestricted by circuit.

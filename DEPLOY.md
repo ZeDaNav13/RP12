@@ -38,6 +38,7 @@ This writes:
 
 The export includes the PHC reference sequence starting at `534.iS200000000001`.
 Pump rows are grouped by counts (`BDP`/`BDC`/no pump), not by which bomba dropdown receives each pump.
+Every exported row has at least one sonda selected, and `assembly_code` is unique.
 
 ### A) Deploy at domain root (recommended)
 Example: `https://client-domain.com/`

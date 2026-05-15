@@ -299,11 +299,16 @@ function buildPumpCombinations(questionRows) {
   return combinations;
 }
 
+function hasSelectedCode(codes) {
+  return codes.some((code) => code !== "-");
+}
+
 function buildOutputRows(questionRows) {
   const modelRows = questionRows.is2_modelo.filter((row) => !isNoneSelection(row.option));
   const baseCombinations = cartesian([modelRows, buildPumpCombinations(questionRows)]);
   const circuitVariants = buildCircuitVariants(questionRows);
   const outputRows = [];
+  const seenAssemblyCodes = new Set();
 
   for (const baseCombination of baseCombinations) {
     const [modelo, pumpCombination] = baseCombination;
@@ -324,6 +329,10 @@ function buildOutputRows(questionRows) {
           const option = answers[questionId]?.option ?? "";
           return (defaultAssemblyCode(questionRows, questionId, option) ?? "-").trim() || "-";
         });
+        if (!hasSelectedCode(probeCodes)) {
+          continue;
+        }
+
         const sondaSegment = formatSondaSegment(probeCodes, sondaCloro.option);
         const portaSondasCode = resolvePortaSondasCode(probeCodes, sondaCloro.option);
         const portaSondasPrice = getOptionPrice(questionRows, portaSondasDef.id, portaSondasCode);
@@ -338,6 +347,11 @@ function buildOutputRows(questionRows) {
         ]
           .filter(Boolean)
           .join("_");
+        if (seenAssemblyCodes.has(assemblyCode)) {
+          continue;
+        }
+        seenAssemblyCodes.add(assemblyCode);
+
         const totalPrice =
           modelo.price +
           pumpCombination.totalPrice +

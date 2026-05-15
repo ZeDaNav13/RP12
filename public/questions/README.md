@@ -25,8 +25,10 @@ Cada pergunta do configurador lê um CSV desta pasta.
 - O ficheiro `all_reply_combinations_filtered.csv` é gerado a partir destes CSVs.
 - Regenerar com `npm run generate:combinations` na raiz do projeto.
 - O export exclui combinações sem modelo IS2 e sem circuito.
+- O export exclui qualquer combinação sem sonda selecionada, com ou sem bombas.
 - As bombas são agrupadas por contagem de `BDP`, `BDC` e `Sem Bombas`; a ordem/pergunta onde a bomba foi escolhida não cria novas combinações.
-- Cada linha tem `referencia_phc`, começando em `534.iS200000000001` e aumentando de 1 em 1.
+- Cada linha tem `referencia_phc`, começando em `534.iS200000000001` e aumentando de 1 em 1 por `assembly_code` único.
+- O export não pode conter `assembly_code` repetido; se várias escolhas gerarem o mesmo código, só a primeira é mantida.
 - O export respeita as mesmas restrições de circuito/sonda de cloro usadas no ecrã.
 
 ## Ficheiros

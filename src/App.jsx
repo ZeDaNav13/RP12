@@ -313,94 +313,112 @@ function buildCircuitVariants(questionRows) {
     });
 }
 
-function getPumpCombinationIndex(proportionalCount, constantCount) {
-  let index = 0;
+function hasSelectedCode(codes) {
+  return codes.some((code) => code !== "-");
+}
 
-  for (let p = 0; p <= 4; p += 1) {
-    for (let c = 0; c <= 4 - p; c += 1) {
-      if (p === proportionalCount && c === constantCount) return index;
-      index += 1;
+function getSelectedCodes(questionRows, questionIds, answers) {
+  return questionIds.map((questionId) => {
+    const option = answers[questionId] ?? "";
+    return (defaultAssemblyCode(questionRows, questionId, option) ?? "-").trim() || "-";
+  });
+}
+
+function cartesian(rows) {
+  return rows.reduce(
+    (acc, list) => acc.flatMap((prefix) => list.map((item) => [...prefix, item])),
+    [[]]
+  );
+}
+
+function buildPumpCombinations(questionRows) {
+  const pumpRows = questionRows.bomba_biocida_inorganico ?? [];
+  const proportionalPump = pumpRows.find((row) => row.code === "BDP");
+  const constantPump = pumpRows.find((row) => row.code === "BDC");
+  if (!proportionalPump || !constantPump) return [];
+
+  const combinations = [];
+  for (let proportionalCount = 0; proportionalCount <= 4; proportionalCount += 1) {
+    for (let constantCount = 0; constantCount <= 4 - proportionalCount; constantCount += 1) {
+      const pumpCodes = [
+        ...Array(proportionalCount).fill(proportionalPump.code),
+        ...Array(constantCount).fill(constantPump.code)
+      ];
+      combinations.push({
+        proportionalCount,
+        constantCount,
+        pumpSegment: pumpCodes.length > 0 ? `D${formatPumpCounts(pumpCodes)}` : "_"
+      });
+    }
+  }
+  return combinations;
+}
+
+function buildAssemblyCode(questionRows, modelOption, pumpSegment, probeCodes, cloroOption, circuito) {
+  const sondaSegment = formatSondaSegment(probeCodes, cloroOption);
+  const portaSondasCode = resolvePortaSondasCode(probeCodes, cloroOption);
+  const bdwSegment = needsBDW(questionRows, circuito) ? "BDW" : "";
+
+  return [
+    `MDC_iS.${defaultAssemblyCode(questionRows, "is2_modelo", modelOption) || "-"}`,
+    pumpSegment,
+    sondaSegment,
+    portaSondasCode,
+    bdwSegment
+  ]
+    .filter(Boolean)
+    .join("_");
+}
+
+function buildUniqueAssemblyCodes(questionRows) {
+  const modelRows = (questionRows.is2_modelo ?? []).filter((row) => !isNoneSelection(row.option));
+  const pumpCombinations = buildPumpCombinations(questionRows);
+  const circuitVariants = buildCircuitVariants(questionRows);
+  const assemblyCodes = [];
+  const seen = new Set();
+
+  for (const modelRow of modelRows) {
+    for (const pumpCombination of pumpCombinations) {
+      for (const { circuito, openCoolingWaterType } of circuitVariants) {
+        const probeLists = probeQuestionIds.map((questionId) =>
+          getProbeRowsForCircuit(
+            questionRows[questionId] ?? [],
+            questionId,
+            circuito,
+            openCoolingWaterType
+          )
+        );
+
+        for (const [sondaCloro, sondaPh, sondaCondutividade] of cartesian(probeLists)) {
+          const probeCodes = [sondaCloro, sondaPh, sondaCondutividade].map(
+            (row) => (row.code ?? "-").trim() || "-"
+          );
+          if (!hasSelectedCode(probeCodes)) continue;
+
+          const assemblyCode = buildAssemblyCode(
+            questionRows,
+            modelRow.option,
+            pumpCombination.pumpSegment,
+            probeCodes,
+            sondaCloro.option,
+            circuito
+          );
+          if (seen.has(assemblyCode)) continue;
+
+          seen.add(assemblyCode);
+          assemblyCodes.push(assemblyCode);
+        }
+      }
     }
   }
 
-  return -1;
+  return assemblyCodes;
 }
 
-function countProbeCombinations(questionRows, circuito, openCoolingWaterType) {
-  return probeQuestionIds.reduce((total, questionId) => {
-    const rows = getProbeRowsForCircuit(
-      questionRows[questionId] ?? [],
-      questionId,
-      circuito,
-      openCoolingWaterType
-    );
-    return total * rows.length;
-  }, 1);
-}
-
-function getPhcReference(questionRows, answers, circuito, openCoolingWaterType) {
-  if (!circuito || isNoneSelection(answers.is2_modelo)) return "-";
-
-  const modelRows = (questionRows.is2_modelo ?? []).filter((row) => !isNoneSelection(row.option));
-  const modelIndex = modelRows.findIndex((row) => row.option === answers.is2_modelo);
-  if (modelIndex < 0) return "-";
-
-  let proportionalCount = 0;
-  let constantCount = 0;
-  for (const questionId of pumpQuestionIds) {
-    const code =
-      (defaultAssemblyCode(questionRows, questionId, answers[questionId]) ?? "-").trim() || "-";
-    if (code === "BDP") proportionalCount += 1;
-    if (code === "BDC") constantCount += 1;
-  }
-
-  const pumpCombinationIndex = getPumpCombinationIndex(proportionalCount, constantCount);
-  if (pumpCombinationIndex < 0) return "-";
-
-  const circuitVariants = buildCircuitVariants(questionRows);
-  const activeOpenCoolingWaterType =
-    circuito === OPEN_COOLING_CIRCUIT ? openCoolingWaterType : "";
-  const circuitIndex = circuitVariants.findIndex(
-    (variant) =>
-      variant.circuito === circuito && variant.openCoolingWaterType === activeOpenCoolingWaterType
-  );
-  if (circuitIndex < 0) return "-";
-
-  const probeRows = probeQuestionIds.map((questionId) =>
-    getProbeRowsForCircuit(
-      questionRows[questionId] ?? [],
-      questionId,
-      circuito,
-      activeOpenCoolingWaterType
-    )
-  );
-  const probeIndexes = probeQuestionIds.map((questionId, index) =>
-    probeRows[index].findIndex((row) => row.option === answers[questionId])
-  );
-  if (probeIndexes.some((index) => index < 0)) return "-";
-
-  const combinationsPerCircuitSet = circuitVariants.reduce(
-    (sum, variant) =>
-      sum + countProbeCombinations(questionRows, variant.circuito, variant.openCoolingWaterType),
-    0
-  );
-  const combinationsBeforeCircuit = circuitVariants
-    .slice(0, circuitIndex)
-    .reduce(
-      (sum, variant) =>
-        sum + countProbeCombinations(questionRows, variant.circuito, variant.openCoolingWaterType),
-      0
-    );
-  const [cloroRows, phRows, condRows] = probeRows;
-  const [cloroIndex, phIndex, condIndex] = probeIndexes;
-  const probeIndex = cloroIndex * phRows.length * condRows.length + phIndex * condRows.length + condIndex;
-  const combinationIndex =
-    modelIndex * 15 * combinationsPerCircuitSet +
-    pumpCombinationIndex * combinationsPerCircuitSet +
-    combinationsBeforeCircuit +
-    probeIndex;
-
-  return phcReferenceForIndex(combinationIndex);
+function getPhcReference(assemblyCodes, assemblyCode, canGeneratePrice, hasModel, hasCircuito) {
+  if (!canGeneratePrice || !hasModel || !hasCircuito) return "-";
+  const index = assemblyCodes.indexOf(assemblyCode);
+  return index < 0 ? "-" : phcReferenceForIndex(index);
 }
 
 function money(value) {
@@ -581,6 +599,24 @@ export default function App() {
     return baseTotal + portaSondasTotal + bdwTotal;
   }, [answers, circuito, questionRows]);
 
+  const pumpCodes = useMemo(
+    () => getSelectedCodes(questionRows, pumpQuestionIds, answers),
+    [answers, questionRows]
+  );
+
+  const probeCodes = useMemo(
+    () => getSelectedCodes(questionRows, probeQuestionIds, answers),
+    [answers, questionRows]
+  );
+
+  const hasProbes = hasSelectedCode(probeCodes);
+  const canGeneratePrice = hasProbes;
+  const priceText = canGeneratePrice && showPrice ? money(total) : "---";
+  const currentPumpSegment =
+    pumpCodes.filter((code) => code !== "-").length > 0
+      ? `D${formatPumpCounts(pumpCodes.filter((code) => code !== "-"))}`
+      : "_";
+
   const detailedRows = useMemo(() => {
     const baseRows = QUESTION_DEFS.map((q) => {
       const selection = answers[q.id] ?? "";
@@ -638,43 +674,34 @@ export default function App() {
     []
   );
 
-  const assemblyLine = useMemo(() => {
-    const modelOption = answers.is2_modelo ?? "";
-    const modelCode =
-      (defaultAssemblyCode(questionRows, "is2_modelo", modelOption) ?? "-").trim() || "-";
+  const assemblyLine = useMemo(
+    () =>
+      buildAssemblyCode(
+      questionRows,
+      answers.is2_modelo ?? "",
+      currentPumpSegment,
+      probeCodes,
+      answers.sonda_cloro,
+      circuito
+    ),
+    [answers.is2_modelo, answers.sonda_cloro, circuito, currentPumpSegment, probeCodes, questionRows]
+  );
 
-    const pumpCodes = pumpQuestionIds
-      .map((questionId) => {
-        const option = answers[questionId] ?? "";
-        return (defaultAssemblyCode(questionRows, questionId, option) ?? "-").trim() || "-";
-      })
-      .filter((code) => code !== "-");
-
-    const dosingSegment = pumpCodes.length > 0 ? `D${formatPumpCounts(pumpCodes)}` : "_";
-
-    const probeCodes = probeQuestionIds.map((questionId) => {
-      const option = answers[questionId] ?? "";
-      return (defaultAssemblyCode(questionRows, questionId, option) ?? "-").trim() || "-";
-    });
-
-    const sondaSegment = formatSondaSegment(probeCodes, answers.sonda_cloro);
-    const portaSondasCode = resolvePortaSondasCode(probeCodes, answers.sonda_cloro);
-    const bdwSegment = needsBDW(questionRows, circuito) ? "BDW" : "";
-
-    return [
-      `MDC_iS.${modelCode}`,
-      dosingSegment,
-      sondaSegment,
-      portaSondasCode,
-      bdwSegment
-    ]
-      .filter(Boolean)
-      .join("_");
-  }, [answers, circuito, questionRows]);
+  const uniqueAssemblyCodes = useMemo(
+    () => buildUniqueAssemblyCodes(questionRows),
+    [questionRows]
+  );
 
   const phcReference = useMemo(
-    () => getPhcReference(questionRows, answers, circuito, openCoolingWaterType),
-    [answers, circuito, openCoolingWaterType, questionRows]
+    () =>
+      getPhcReference(
+        uniqueAssemblyCodes,
+        assemblyLine,
+        canGeneratePrice,
+        !isNoneSelection(answers.is2_modelo),
+        Boolean(circuito)
+      ),
+    [answers.is2_modelo, assemblyLine, canGeneratePrice, circuito, uniqueAssemblyCodes]
   );
 
   const is2Description = useMemo(() => {
@@ -865,11 +892,11 @@ export default function App() {
             <div className="summaryRow">
               <span className="summaryLabel">Valor estimado</span>
               <div className="summaryValueWrap">
-                <strong className="summaryValue">{showPrice ? money(total) : "---"}</strong>
-                {showPrice ? (
+                <strong className="summaryValue">{priceText}</strong>
+                {showPrice && canGeneratePrice ? (
                   <button
                     className="copyIconButton"
-                    onClick={() => copyToClipboard(money(total))}
+                    onClick={() => copyToClipboard(priceText)}
                     aria-label="Copiar valor estimado"
                     title="Copiar"
                   >
@@ -882,6 +909,7 @@ export default function App() {
                     onClick={() => setShowPrice(true)}
                     aria-label="Mostrar valor estimado"
                     title="Mostrar"
+                    disabled={!canGeneratePrice}
                   >
                     <svg
                       className="summaryIcon"
@@ -928,6 +956,11 @@ export default function App() {
               </div>
             </div>
           </div>
+          {!canGeneratePrice ? (
+            <p className="copyStatus muted">
+              Para gerar preço, selecione pelo menos uma sonda.
+            </p>
+          ) : null}
           {loadError ? <p className="copyStatus muted">{loadError}</p> : null}
           {copyMsg ? <p className="copyStatus muted">{copyMsg}</p> : null}
         </section>
@@ -1035,7 +1068,7 @@ export default function App() {
           </table>
         </section>
 
-        {showPrice ? (
+        {showPrice && canGeneratePrice ? (
           <section className="printPrice">
             <p>
               <strong>Preço:</strong> {money(total)}

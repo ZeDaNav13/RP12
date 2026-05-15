@@ -43,7 +43,6 @@ Run before each push/deploy:
   Watercare, Tratamento de Águas Lda / NIPC / Centro Empresarial / Estrada Nacional / postal line.
 - Orçamento / Modelo MDC and logo are vertically centered as a group.
 - Below: modelo selecionado, data, codeline, PHC reference.
-- Separator line appears between summary and detailed section.
 - Detalhado table appears.
 - `Preço` appears at end only when price was visible before print.
 - Font sizes are readable on A4.
@@ -51,5 +50,6 @@ Run before each push/deploy:
 6) Final smoke checks
 - Change several combinations and confirm total + codeline update.
 - Confirm PHC reference updates with selection changes.
+- Confirm no price/PHC is generated until at least one sonda is selected.
 - Confirm copy buttons still copy expected values.
 - Confirm no console errors.
