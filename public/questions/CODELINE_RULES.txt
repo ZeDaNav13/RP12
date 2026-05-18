@@ -39,8 +39,7 @@ Segmento de sondas (Q6..Q8)
     - existe sonda de condutividade, OU
     - a sonda de cloro é uma das versões m0c abaixo:
       - Cloro 0-2 Reiss CS4 m0c
-      - Cloro 0-5 Reiss CS4 m0c
-      - Cloro 0-10 Reiss CS4 m0c
+      - Cloro 0-20 Reiss CS4 m0c
       - Cloro 0-5 Reiss AS3 m0c
       - Cloro 0-20 Reiss AS3 m0c
       - Cloro 0-5 Reiss AS2 m0c

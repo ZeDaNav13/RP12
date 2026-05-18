@@ -242,8 +242,7 @@ function formatSondaSegment(probeCodes, cloroSelection) {
 
   const ptCloroOptions = new Set([
     "Cloro 0-2 Reiss CS4 m0c",
-    "Cloro 0-5 Reiss CS4 m0c",
-    "Cloro 0-10 Reiss CS4 m0c",
+    "Cloro 0-20 Reiss CS4 m0c",
     "Cloro 0-5 Reiss AS3 m0c",
     "Cloro 0-20 Reiss AS3 m0c",
     "Cloro 0-5 Reiss AS2 m0c",
