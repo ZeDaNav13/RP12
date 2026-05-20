@@ -181,10 +181,10 @@ function formatSondaSegment(probeCodes, cloroSelection) {
   const ptCloroOptions = new Set([
     "Cloro 0-2 Reiss CS4 m0c",
     "Cloro 0-20 Reiss CS4 m0c",
-    "Cloro 0-5 Reiss AS3 m0c",
-    "Cloro 0-20 Reiss AS3 m0c",
-    "Cloro 0-5 Reiss AS2 m0c",
-    "Cloro 0-20 Reiss AS2 m0c"
+    "Cloro Reiss AS3 m0c 0-2/0-0.7 c/RV1",
+    "Cloro Reiss AS3 m0c 0-20/0-7 c/RV1",
+    "Cloro Reiss AS2 m0c 0-2/0-0.7 c/RV1",
+    "Cloro Reiss AS2 m0c 0-20/0-7 c/RV1"
   ]);
 
   const hasPhOrCond = probeCodes[1] !== "-" || probeCodes[2] !== "-";
@@ -216,10 +216,10 @@ function resolvePortaSondasCode(probeCodes, cloroSelection) {
   if (!baseLetter) return "";
 
   const qSuffixCloroOptions = new Set([
-    "Cloro 0-5 mA Reiss AS3",
-    "Cloro 0-20 mA Reiss AS3",
-    "Cloro 0-5 Reiss AS3 m0c",
-    "Cloro 0-20 Reiss AS3 m0c"
+    "Cloro Reiss AS3 mA 0-5/0-1.7 c/RV1",
+    "Cloro Reiss AS3 mA 0-20/0-7 c/RV1",
+    "Cloro Reiss AS3 m0c 0-2/0-0.7 c/RV1",
+    "Cloro Reiss AS3 m0c 0-20/0-7 c/RV1"
   ]);
 
   const suffix = qSuffixCloroOptions.has((cloroSelection ?? "").trim()) ? "Q" : "F";

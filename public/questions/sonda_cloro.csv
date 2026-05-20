@@ -2,14 +2,14 @@ option,price,code
 Cloro 0-2 mA Reiss CS4,1117.08,Cl2mA
 Cloro 0-5 mA Reiss CS4,1117.08,Cl5mA
 Cloro 0-10 mA Reiss CS4,1117.08,Cl10mA
-Cloro 0-5 mA Reiss AS3,2273.62,Cl5mA
-Cloro 0-20 mA Reiss AS3,2273.62,Cl20mA
-Cloro 0-5 Reiss AS2,2006.34,Cl5mA
-Cloro 0-20 Reiss AS2,2006.34,Cl20mA
+Cloro Reiss AS3 mA 0-5/0-1.7 c/RV1,2273.62,Cl5mA
+Cloro Reiss AS3 mA 0-20/0-7 c/RV1,2273.62,Cl20mA
+Cloro Reiss AS2 mA 0-5/0-1.7 c/RV1,2006.34,Cl5mA
+Cloro Reiss AS2 mA 0-20/0-7 c/RV1,2006.34,Cl20mA
 Cloro 0-2 Reiss CS4 m0c,1751.66,Cl2m0c
 Cloro 0-20 Reiss CS4 m0c,1751.66,Cl20m0c
-Cloro 0-5 Reiss AS3 m0c,2160.48,Cl5m0c
-Cloro 0-20 Reiss AS3 m0c,2160.48,Cl20m0c
-Cloro 0-5 Reiss AS2 m0c,1998.42,Cl5m0c
-Cloro 0-20 Reiss AS2 m0c,1998.42,Cl20m0c
+Cloro Reiss AS3 m0c 0-2/0-0.7 c/RV1,2160.48,Cl2m0c
+Cloro Reiss AS3 m0c 0-20/0-7 c/RV1,2160.48,Cl20m0c
+Cloro Reiss AS2 m0c 0-2/0-0.7 c/RV1,1998.42,Cl2m0c
+Cloro Reiss AS2 m0c 0-20/0-7 c/RV1,1998.42,Cl20m0c
 Sem sonda de cloro,0,-
