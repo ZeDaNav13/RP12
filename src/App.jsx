@@ -94,6 +94,7 @@ const openCoolingWaterTypes = ["Água Limpa", "Água Suja"];
 const PHC_REFERENCE_PREFIX = "534.iS2";
 const PHC_REFERENCE_START = 1n;
 const PHC_REFERENCE_WIDTH = 11;
+const EMPTY_OPTION = "";
 
 function phcReferenceForIndex(index) {
   const number = PHC_REFERENCE_START + BigInt(index);
@@ -110,6 +111,10 @@ function isNoneSelection(selection) {
 
 function getNoneOption(rows) {
   return rows.map((row) => row.option).find((option) => /^(nenhum|sem)/i.test(option.trim())) ?? "";
+}
+
+function buildEmptyAnswers() {
+  return Object.fromEntries(QUESTION_DEFS.map((question) => [question.id, EMPTY_OPTION]));
 }
 
 function isProbeOptionVisibleForCircuit(circuito, openCoolingWaterType, option) {
@@ -452,7 +457,7 @@ function applyStyleguide(rawStyleguide) {
 
 export default function App() {
   const [questionRows, setQuestionRows] = useState({});
-  const [answers, setAnswers] = useState({});
+  const [answers, setAnswers] = useState(buildEmptyAnswers);
   const [circuito, setCircuito] = useState("");
   const [openCoolingWaterType, setOpenCoolingWaterType] = useState(openCoolingWaterTypes[0]);
   const [showPrice, setShowPrice] = useState(false);
@@ -534,13 +539,11 @@ export default function App() {
     if (Object.keys(questionRows).length === 0) return;
 
     setAnswers((prev) => {
-      const next = {};
+      const next = buildEmptyAnswers();
       QUESTION_DEFS.forEach((q) => {
         const options = (questionRows[q.id] ?? []).map((row) => row.option);
         if (prev[q.id] && options.includes(prev[q.id])) {
           next[q.id] = prev[q.id];
-        } else {
-          next[q.id] = getNoneOption(questionRows[q.id] ?? []);
         }
       });
       return next;
@@ -570,7 +573,7 @@ export default function App() {
         const selected = prev[questionId] ?? "";
 
         if (selected && !visibleOptions.includes(selected)) {
-          next[questionId] = getNoneOption(visibleRows);
+          next[questionId] = EMPTY_OPTION;
           changed = true;
         }
       });
@@ -661,7 +664,9 @@ export default function App() {
     return rows;
   }, [answers, circuito, openCoolingWaterType, questionRows]);
 
-  const detailedRowsWithValue = detailedRows.filter((row) => !isNoneSelection(row.selection));
+  const detailedRowsWithValue = detailedRows.filter(
+    (row) => row.selection && !isNoneSelection(row.selection)
+  );
 
   const printedAt = useMemo(
     () =>
@@ -674,15 +679,18 @@ export default function App() {
   );
 
   const assemblyLine = useMemo(
-    () =>
-      buildAssemblyCode(
-      questionRows,
-      answers.is2_modelo ?? "",
-      currentPumpSegment,
-      probeCodes,
-      answers.sonda_cloro,
-      circuito
-    ),
+    () => {
+      if (!answers.is2_modelo) return "-";
+
+      return buildAssemblyCode(
+        questionRows,
+        answers.is2_modelo ?? "",
+        currentPumpSegment,
+        probeCodes,
+        answers.sonda_cloro,
+        circuito
+      );
+    },
     [answers.is2_modelo, answers.sonda_cloro, circuito, currentPumpSegment, probeCodes, questionRows]
   );
 
@@ -751,6 +759,43 @@ export default function App() {
     window.print();
   };
 
+  const handleModelChange = (nextModel) => {
+    setAnswers(() => ({
+      ...buildEmptyAnswers(),
+      is2_modelo: nextModel
+    }));
+    setCircuito("");
+    setOpenCoolingWaterType(openCoolingWaterTypes[0]);
+    setShowPrice(false);
+  };
+
+  const handleCircuitoChange = (nextCircuito) => {
+    setCircuito(nextCircuito);
+    setAnswers((prev) => ({
+      ...prev,
+      ...Object.fromEntries([...pumpQuestionIds, ...probeQuestionIds].map((id) => [id, EMPTY_OPTION]))
+    }));
+    setOpenCoolingWaterType(openCoolingWaterTypes[0]);
+    setShowPrice(false);
+  };
+
+  const handleQuestionChange = (questionId, value) => {
+    setAnswers((prev) => ({
+      ...prev,
+      [questionId]: value
+    }));
+    setShowPrice(false);
+  };
+
+  const handleOpenCoolingWaterTypeChange = (nextType) => {
+    setOpenCoolingWaterType(nextType);
+    setAnswers((prev) => ({
+      ...prev,
+      ...Object.fromEntries(probeQuestionIds.map((id) => [id, EMPTY_OPTION]))
+    }));
+    setShowPrice(false);
+  };
+
   return (
     <main className="page">
       <div className="screenOnly">
@@ -774,13 +819,9 @@ export default function App() {
                   </span>
                   <select
                     value={answers[q.id] ?? ""}
-                    onChange={(e) =>
-                      setAnswers((prev) => ({
-                        ...prev,
-                        [q.id]: e.target.value
-                      }))
-                    }
+                    onChange={(e) => handleModelChange(e.target.value)}
                   >
+                    <option value="">Seleccionar</option>
                     {(questionRows[q.id] ?? []).map((row) => (
                       <option key={row.option} value={row.option}>
                         {row.option}
@@ -792,7 +833,7 @@ export default function App() {
 
                   <div className="wide circuitoField">
                     <span className="fieldLabel">Circuito</span>
-                    <select value={circuito} onChange={(e) => setCircuito(e.target.value)}>
+                    <select value={circuito} onChange={(e) => handleCircuitoChange(e.target.value)}>
                       <option value="">Seleccionar</option>
                       {circuitoOptions.map((option) => (
                         <option key={option} value={option}>
@@ -814,7 +855,7 @@ export default function App() {
                             className={type === openCoolingWaterType ? "active" : ""}
                             role="radio"
                             aria-checked={type === openCoolingWaterType}
-                            onClick={() => setOpenCoolingWaterType(type)}
+                            onClick={() => handleOpenCoolingWaterTypeChange(type)}
                           >
                             {type}
                           </button>
@@ -835,13 +876,9 @@ export default function App() {
                   <span className="fieldLabel">{q.label}</span>
                   <select
                     value={answers[q.id] ?? ""}
-                    onChange={(e) =>
-                      setAnswers((prev) => ({
-                        ...prev,
-                        [q.id]: e.target.value
-                      }))
-                    }
+                    onChange={(e) => handleQuestionChange(q.id, e.target.value)}
                   >
+                    <option value="">Seleccionar</option>
                     {(questionRows[q.id] ?? []).map((row) => (
                       <option key={row.option} value={row.option}>
                         {row.option}
@@ -866,13 +903,9 @@ export default function App() {
                   <span className="fieldLabel">{q.label}</span>
                   <select
                     value={answers[q.id] ?? ""}
-                    onChange={(e) =>
-                      setAnswers((prev) => ({
-                        ...prev,
-                        [q.id]: e.target.value
-                      }))
-                    }
+                    onChange={(e) => handleQuestionChange(q.id, e.target.value)}
                   >
+                    <option value="">Seleccionar</option>
                     {(visibleProbeRowsByQuestion[q.id] ?? []).map((row) => (
                       <option key={row.option} value={row.option}>
                         {row.option}

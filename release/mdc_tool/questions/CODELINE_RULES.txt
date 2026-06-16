@@ -39,12 +39,11 @@ Segmento de sondas (Q6..Q8)
     - existe sonda de condutividade, OU
     - a sonda de cloro é uma das versões m0c abaixo:
       - Cloro 0-2 Reiss CS4 m0c
-      - Cloro 0-5 Reiss CS4 m0c
-      - Cloro 0-10 Reiss CS4 m0c
-      - Cloro 0-5 Reiss AS3 m0c
-      - Cloro 0-20 Reiss AS3 m0c
-      - Cloro 0-5 Reiss AS2 m0c
-      - Cloro 0-20 Reiss AS2 m0c
+      - Cloro 0-20 Reiss CS4 m0c
+      - Cloro Reiss AS3 m0c 0-2/0-0.7 c/RV1
+      - Cloro Reiss AS3 m0c 0-20/0-7 c/RV1
+      - Cloro Reiss AS2 m0c 0-2/0-0.7 c/RV1
+      - Cloro Reiss AS2 m0c 0-20/0-7 c/RV1
 
 Porta-Sondas (automático, não escolhido pelo utilizador)
 - Só é calculado se existir pelo menos uma sonda selecionada.
@@ -56,10 +55,10 @@ Porta-Sondas (automático, não escolhido pelo utilizador)
   - F: só pH OU só condutividade
 - Sufixo final (Q/F) depende da sonda de cloro:
   - Q se cloro selecionado for uma destas:
-    - Cloro 0-5 mA Reiss AS3
-    - Cloro 0-20 mA Reiss AS3
-    - Cloro 0-5 Reiss AS3 m0c
-    - Cloro 0-20 Reiss AS3 m0c
+    - Cloro Reiss AS3 mA 0-5/0-1.7 c/RV1
+    - Cloro Reiss AS3 mA 0-20/0-7 c/RV1
+    - Cloro Reiss AS3 m0c 0-2/0-0.7 c/RV1
+    - Cloro Reiss AS3 m0c 0-20/0-7 c/RV1
   - F em todos os restantes casos (ou sem cloro)
 - Código final de Porta-Sondas = {base}{sufixo}
   - exemplos: AF, BQ, CF, DF, FF
