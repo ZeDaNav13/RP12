@@ -791,7 +791,7 @@ export default function App() {
     setOpenCoolingWaterType(nextType);
     setAnswers((prev) => ({
       ...prev,
-      ...Object.fromEntries(probeQuestionIds.map((id) => [id, EMPTY_OPTION]))
+      ...Object.fromEntries([...pumpQuestionIds, ...probeQuestionIds].map((id) => [id, EMPTY_OPTION]))
     }));
     setShowPrice(false);
   };
