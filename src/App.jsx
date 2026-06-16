@@ -821,7 +821,7 @@ export default function App() {
                     value={answers[q.id] ?? ""}
                     onChange={(e) => handleModelChange(e.target.value)}
                   >
-                    <option value="">Seleccionar</option>
+                    <option value="" hidden />
                     {(questionRows[q.id] ?? []).map((row) => (
                       <option key={row.option} value={row.option}>
                         {row.option}
@@ -834,7 +834,7 @@ export default function App() {
                   <div className="wide circuitoField">
                     <span className="fieldLabel">Circuito</span>
                     <select value={circuito} onChange={(e) => handleCircuitoChange(e.target.value)}>
-                      <option value="">Seleccionar</option>
+                      <option value="" hidden />
                       {circuitoOptions.map((option) => (
                         <option key={option} value={option}>
                           {option}
@@ -878,7 +878,7 @@ export default function App() {
                     value={answers[q.id] ?? ""}
                     onChange={(e) => handleQuestionChange(q.id, e.target.value)}
                   >
-                    <option value="">Seleccionar</option>
+                    <option value="" hidden />
                     {(questionRows[q.id] ?? []).map((row) => (
                       <option key={row.option} value={row.option}>
                         {row.option}
@@ -905,7 +905,7 @@ export default function App() {
                     value={answers[q.id] ?? ""}
                     onChange={(e) => handleQuestionChange(q.id, e.target.value)}
                   >
-                    <option value="">Seleccionar</option>
+                    <option value="" hidden />
                     {(visibleProbeRowsByQuestion[q.id] ?? []).map((row) => (
                       <option key={row.option} value={row.option}>
                         {row.option}
