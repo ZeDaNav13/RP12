@@ -7,6 +7,7 @@ Production deployment is static-only: build locally/CI, then publish the `dist/`
 
 - Full repository source code (recommended), OR
 - Just the built output (`dist/`) for one-off delivery.
+- Standard client upload package: `mdc_tool_ready_to_upload.zip`
 
 Important runtime data is in:
 - `public/questions/*.csv`
@@ -39,6 +40,16 @@ This writes:
 The export includes the PHC reference sequence starting at `534.iS200000000001`.
 Pump rows are grouped by counts (`BDP`/`BDC`/no pump), not by which bomba dropdown receives each pump.
 Every exported row has at least one sonda selected, and `assembly_code` is unique.
+
+To build the client-ready package for `/mdc_tool/`:
+
+```bash
+npm run release:client
+```
+
+This refreshes:
+- `release/mdc_tool/`
+- `mdc_tool_ready_to_upload.zip`
 
 ### A) Deploy at domain root (recommended)
 Example: `https://client-domain.com/`
@@ -79,17 +90,9 @@ Adjust:
 
 To change options/prices/codes:
 1. Edit files in `public/questions/`
-2. Run `npm run generate:combinations` if the combinations CSV is needed
-3. Run build again
-4. Replace deployed static files with new `dist/`
-
-For the current upload package path (`/mdc_tool/`), use:
-
-```bash
-npm run build -- --base=/mdc_tool/
-```
-
-Then copy `dist/` into `release/mdc_tool/` and recreate `mdc_tool_ready_to_upload.zip`.
+2. Update `public/styleguide.json` too if colors changed
+3. Run `npm run release:client`
+4. Upload the refreshed `mdc_tool_ready_to_upload.zip` or replace deployed static files with the new `release/mdc_tool/`
 
 ## 7) Quick validation checklist after deploy
 
@@ -104,4 +107,4 @@ Then copy `dist/` into `release/mdc_tool/` and recreate `mdc_tool_ready_to_uploa
 ## 8) Notes about current Vite config
 
 `vite.config.js` currently defaults production base to `/RP12/` (GitHub Pages workflow).
-Using `npm run build -- --base=...` overrides that base at build time, which is the recommended handoff approach.
+Using `npm run build -- --base=...` overrides that base at build time, and `npm run build:client` / `npm run release:client` already apply `/mdc_tool/` for the client package.

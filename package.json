@@ -2,12 +2,16 @@
   "name": "rp12-budget-tool",
   "private": true,
   "version": "0.0.1",
+  "description": "Static RP12 budget configurator and client release package builder.",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:client": "vite build --base=/mdc_tool/",
     "generate:combinations": "node scripts/generate-combinations.mjs",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "release:prepare": "npm run generate:combinations && npm run build:client && node scripts/prepare-client-release.mjs",
+    "release:client": "npm run generate:combinations && npm run build:client && node scripts/prepare-client-release.mjs --zip"
   },
   "dependencies": {
     "react": "^18.3.1",

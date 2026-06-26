@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-06-26
+- Added a root `README.md` covering local development, release packaging, and editable client data.
+- Added scripted client packaging with `npm run build:client`, `npm run release:prepare`, and `npm run release:client`.
+- Added `scripts/prepare-client-release.mjs` to rebuild `release/mdc_tool/` and refresh `mdc_tool_ready_to_upload.zip`.
+- Updated deployment and client handoff docs to match the generated package contents and current release flow.
+
 ## 2026-05-15
 - Added final export rule: every valid priced combination must include at least one sonda.
 - Made `assembly_code` the unique key for PHC reference generation.
