@@ -44,7 +44,14 @@ Cada pergunta do configurador lê um CSV desta pasta.
 - `circuito.csv` -> `option,bdw_enabled,description` (`1` ativa BDW, `0` desativa)
 - `porta_sondas.csv` -> `option,price,code`
 - `bdw.csv` -> `option,price,code`
+- `mandatory_addons.csv` -> `option,price,code,description`
 
 ## Nota
 
 Se um item representar "sem/nenhum", manter uma opção com esse texto (ex.: `Sem Bombas`, `Sem sonda de cloro`) e preço `0`.
+
+## Add-ons obrigatórios
+
+- Todas as linhas de `mandatory_addons.csv` são adicionadas automaticamente quando existe um modelo IS2 selecionado.
+- Serve para custos fixos obrigatórios como cabos, consumíveis ou material diverso.
+- Para atualizar preços ou adicionar novos itens obrigatórios, editar apenas este ficheiro.

@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-07-03
+- Updated `IS2` model prices for `CP10` through `CP60`.
+- Added configurable mandatory budget add-ons via `public/questions/mandatory_addons.csv`.
+- Included mandatory add-ons in on-screen totals, detailed budget output, and generated combination exports when an `IS2` model is selected.
+- Refreshed `release/mdc_tool/`, `all_reply_combinations_filtered.csv`, and `mdc_tool_ready_to_upload.zip` for client testing and delivery.
+
 ## 2026-06-26
 - Added a root `README.md` covering local development, release packaging, and editable client data.
 - Added scripted client packaging with `npm run build:client`, `npm run release:prepare`, and `npm run release:client`.

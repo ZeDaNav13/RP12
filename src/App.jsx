@@ -68,6 +68,11 @@ const BDW_DEF = {
   csvFile: "bdw.csv"
 };
 
+const MANDATORY_ADDONS_DEF = {
+  id: "mandatory_addons",
+  csvFile: "mandatory_addons.csv"
+};
+
 const DEFAULT_STYLEGUIDE = {
   main_dark: "#292929",
   secondary_dark: "#777777",
@@ -302,6 +307,14 @@ function needsBDW(questionRows, circuito) {
   return isTruthyFlag(circuitoRow?.bdw_enabled);
 }
 
+function hasSelectedModel(modelOption) {
+  return Boolean(modelOption) && !isNoneSelection(modelOption);
+}
+
+function getMandatoryAddOns(questionRows, modelOption) {
+  return hasSelectedModel(modelOption) ? questionRows[MANDATORY_ADDONS_DEF.id] ?? [] : [];
+}
+
 function buildCircuitVariants(questionRows) {
   return (questionRows[CIRCUITO_DEF.id] ?? [])
     .filter((row) => !isNoneSelection(row.option))
@@ -503,7 +516,7 @@ export default function App() {
 
     async function loadQuestionData() {
       try {
-        const defs = [...QUESTION_DEFS, CIRCUITO_DEF, PORTA_SONDAS_DEF, BDW_DEF];
+        const defs = [...QUESTION_DEFS, CIRCUITO_DEF, PORTA_SONDAS_DEF, BDW_DEF, MANDATORY_ADDONS_DEF];
         const loaded = await Promise.all(
           defs.map(async (def) => {
             const response = await fetch(`${import.meta.env.BASE_URL}questions/${def.csvFile}`, {
@@ -598,7 +611,11 @@ export default function App() {
     const bdwTotal = needsBDW(questionRows, circuito)
       ? getOptionPrice(questionRows, BDW_DEF.id, "BDW")
       : 0;
-    return baseTotal + portaSondasTotal + bdwTotal;
+    const mandatoryAddOnsTotal = getMandatoryAddOns(questionRows, answers.is2_modelo).reduce(
+      (sum, row) => sum + (row.price ?? 0),
+      0
+    );
+    return baseTotal + portaSondasTotal + bdwTotal + mandatoryAddOnsTotal;
   }, [answers, circuito, questionRows]);
 
   const pumpCodes = useMemo(
@@ -660,6 +677,15 @@ export default function App() {
         code: "BDW"
       });
     }
+
+    getMandatoryAddOns(questionRows, answers.is2_modelo).forEach((row, index) => {
+      rows.push({
+        id: `mandatory-addon-${index}`,
+        question: "Acessório obrigatório",
+        selection: row.option,
+        code: row.code?.trim() || "-"
+      });
+    });
 
     return rows;
   }, [answers, circuito, openCoolingWaterType, questionRows]);

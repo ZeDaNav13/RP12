@@ -21,6 +21,7 @@ const questionDefs = [
 const circuitoDef = { id: "circuito", csvFile: "circuito.csv" };
 const portaSondasDef = { id: "porta_sondas", csvFile: "porta_sondas.csv" };
 const bdwDef = { id: "bdw", csvFile: "bdw.csv" };
+const mandatoryAddOnsDef = { id: "mandatory_addons", csvFile: "mandatory_addons.csv" };
 
 const probeQuestionIds = ["sonda_cloro", "sonda_ph", "sonda_condutividade"];
 const openCoolingCircuit = "Circuito Aberto de Arrefecimento";
@@ -104,7 +105,7 @@ function parseCsv(text) {
 }
 
 async function loadRows() {
-  const defs = [...questionDefs, circuitoDef, portaSondasDef, bdwDef];
+  const defs = [...questionDefs, circuitoDef, portaSondasDef, bdwDef, mandatoryAddOnsDef];
   const entries = await Promise.all(
     defs.map(async (def) => {
       const csv = await fs.readFile(path.join(questionsDir, def.csvFile), "utf8");
@@ -235,6 +236,14 @@ function needsBDW(questionRows, circuito) {
   return isTruthyFlag(circuitoRow?.bdw_enabled);
 }
 
+function hasSelectedModel(modelOption) {
+  return Boolean(modelOption) && !isNoneSelection(modelOption);
+}
+
+function getMandatoryAddOns(questionRows, modelOption) {
+  return hasSelectedModel(modelOption) ? questionRows[mandatoryAddOnsDef.id] ?? [] : [];
+}
+
 function csvValue(value) {
   const text = value == null ? "" : String(value);
   if (!/[",\n\r]/.test(text)) return text;
@@ -337,6 +346,12 @@ function buildOutputRows(questionRows) {
         const portaSondasPrice = getOptionPrice(questionRows, portaSondasDef.id, portaSondasCode);
         const bdwEnabled = needsBDW(questionRows, circuito);
         const bdwPrice = bdwEnabled ? getOptionPrice(questionRows, bdwDef.id, "BDW") : 0;
+        const mandatoryAddOns = getMandatoryAddOns(questionRows, modelo.option);
+        const mandatoryAddOnsPrice = mandatoryAddOns.reduce(
+          (sum, row) => sum + (row.price ?? 0),
+          0
+        );
+        const mandatoryAddOnsSummary = mandatoryAddOns.map((row) => row.option).join(" + ");
         const assemblyCode = [
           `MDC_iS.${defaultAssemblyCode(questionRows, "is2_modelo", modelo.option) || "-"}`,
           pumpCombination.pumpSegment,
@@ -358,13 +373,16 @@ function buildOutputRows(questionRows) {
           sondaPh.price +
           sondaCondutividade.price +
           portaSondasPrice +
-          bdwPrice;
+          bdwPrice +
+          mandatoryAddOnsPrice;
 
         outputRows.push([
           phcReferenceForIndex(outputRows.length),
           modelo.option,
           defaultAssemblyCode(questionRows, "is2_modelo", modelo.option),
           price(modelo.price),
+          mandatoryAddOnsSummary,
+          price(mandatoryAddOnsPrice),
           pumpCombination.optionSummary,
           pumpCombination.codeSummary,
           pumpCombination.proportionalCount,
@@ -403,6 +421,8 @@ const headers = [
   "is2_modelo_reply",
   "is2_modelo_code",
   "is2_modelo_price",
+  "mandatory_addons_reply",
+  "mandatory_addons_price",
   "pump_combo_reply",
   "pump_combo_code",
   "pump_vms0706_count",
