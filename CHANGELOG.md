@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-07-16
+- Updated the site accent/background color to `#3498DB` while keeping the main text color dark.
+- Changed the detailed budget table to show mandatory add-ons as soon as an `IS2` model is selected.
+- Added a per-line `Preço` column and a `Total` row to the detailed budget view and print layout.
+- Added footer versioning text: `PaperPushers 2026 - v1.3`.
+
 ## 2026-07-03
 - Updated `IS2` model prices for `CP10` through `CP60`.
 - Added configurable mandatory budget add-ons via `public/questions/mandatory_addons.csv`.

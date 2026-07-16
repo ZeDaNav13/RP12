@@ -75,7 +75,7 @@ const MANDATORY_ADDONS_DEF = {
 
 const DEFAULT_STYLEGUIDE = {
   main_dark: "#292929",
-  secondary_dark: "#777777",
+  secondary_dark: "#3498DB",
   secondary_white: "#D1D1D1",
   off_white: "#F0EEE9",
   main_white: "#FFFFFF",
@@ -313,6 +313,16 @@ function hasSelectedModel(modelOption) {
 
 function getMandatoryAddOns(questionRows, modelOption) {
   return hasSelectedModel(modelOption) ? questionRows[MANDATORY_ADDONS_DEF.id] ?? [] : [];
+}
+
+function buildDetailRow(id, question, selection, code, price) {
+  return {
+    id,
+    question,
+    selection,
+    code,
+    price
+  };
 }
 
 function buildCircuitVariants(questionRows) {
@@ -640,13 +650,11 @@ export default function App() {
     const baseRows = QUESTION_DEFS.map((q) => {
       const selection = answers[q.id] ?? "";
       const code = defaultAssemblyCode(questionRows, q.id, selection) || "-";
-      return {
-        id: q.id,
-        question: q.detailLabel ?? q.id,
-        selection,
-        code
-      };
+      const price = selection ? getOptionPrice(questionRows, q.id, selection) : 0;
+      return buildDetailRow(q.id, q.detailLabel ?? q.id, selection, code, price);
     });
+
+    const rows = [...baseRows];
 
     const probeCodes = probeQuestionIds.map((questionId) => {
       const option = answers[questionId] ?? "";
@@ -654,37 +662,43 @@ export default function App() {
     });
 
     const portaSondasCode = resolvePortaSondasCode(probeCodes, answers.sonda_cloro);
-    if (!portaSondasCode) return baseRows;
-
-    const rows = [
-      ...baseRows,
-      {
-        id: "porta-sondas",
-        question: "Porta-Sondas",
-        selection: "Automático",
-        code: portaSondasCode
-      }
-    ];
+    if (portaSondasCode) {
+      rows.push(
+        buildDetailRow(
+          "porta-sondas",
+          "Porta-Sondas",
+          "Automático",
+          portaSondasCode,
+          getOptionPrice(questionRows, PORTA_SONDAS_DEF.id, portaSondasCode)
+        )
+      );
+    }
 
     if (needsBDW(questionRows, circuito)) {
       const circuitoSelection =
         circuito === OPEN_COOLING_CIRCUIT ? `${circuito} - ${openCoolingWaterType}` : circuito;
 
-      rows.push({
-        id: "bdw",
-        question: "Circuito",
-        selection: circuitoSelection,
-        code: "BDW"
-      });
+      rows.push(
+        buildDetailRow(
+          "bdw",
+          "Circuito",
+          circuitoSelection,
+          "BDW",
+          getOptionPrice(questionRows, BDW_DEF.id, "BDW")
+        )
+      );
     }
 
     getMandatoryAddOns(questionRows, answers.is2_modelo).forEach((row, index) => {
-      rows.push({
-        id: `mandatory-addon-${index}`,
-        question: "Acessório obrigatório",
-        selection: row.option,
-        code: row.code?.trim() || "-"
-      });
+      rows.push(
+        buildDetailRow(
+          `mandatory-addon-${index}`,
+          "Acessório obrigatório",
+          row.option,
+          row.code?.trim() || "-",
+          row.price ?? 0
+        )
+      );
     });
 
     return rows;
@@ -692,6 +706,11 @@ export default function App() {
 
   const detailedRowsWithValue = detailedRows.filter(
     (row) => row.selection && !isNoneSelection(row.selection)
+  );
+
+  const detailedRowsTotal = useMemo(
+    () => detailedRowsWithValue.reduce((sum, row) => sum + (row.price ?? 0), 0),
+    [detailedRowsWithValue]
   );
 
   const printedAt = useMemo(
@@ -1032,23 +1051,31 @@ export default function App() {
                   <th>Item</th>
                   <th>Selecção</th>
                   <th>Código</th>
+                  <th>Preço</th>
                 </tr>
               </thead>
               <tbody>
                 {detailedRowsWithValue.length === 0 ? (
                   <tr>
-                    <td colSpan="3" className="muted">
+                    <td colSpan="4" className="muted">
                       Sem componentes selecionados.
                     </td>
                   </tr>
                 ) : (
-                  detailedRowsWithValue.map((row) => (
-                    <tr key={row.id}>
-                      <td>{row.question}</td>
-                      <td>{row.selection}</td>
-                      <td>{row.code}</td>
+                  <>
+                    {detailedRowsWithValue.map((row) => (
+                      <tr key={row.id}>
+                        <td>{row.question}</td>
+                        <td>{row.selection}</td>
+                        <td>{row.code}</td>
+                        <td>{money(row.price ?? 0)}</td>
+                      </tr>
+                    ))}
+                    <tr className="tableTotalRow">
+                      <td colSpan="3">Total</td>
+                      <td>{money(detailedRowsTotal)}</td>
                     </tr>
-                  ))
+                  </>
                 )}
               </tbody>
             </table>
@@ -1062,9 +1089,8 @@ export default function App() {
         </section>
 
         <footer className="footer">
-          © 2026{" "}
           <a href="https://paperpushers.biz" target="_blank" rel="noreferrer">
-            PaperPushers
+            PaperPushers 2026 - v1.3
           </a>
         </footer>
       </div>
@@ -1112,6 +1138,7 @@ export default function App() {
                 <th>Item</th>
                 <th>Selecção</th>
                 <th>Código</th>
+                <th>Preço</th>
               </tr>
             </thead>
             <tbody>
@@ -1120,19 +1147,17 @@ export default function App() {
                   <td>{row.question}</td>
                   <td>{row.selection}</td>
                   <td>{row.code}</td>
+                  <td>{money(row.price ?? 0)}</td>
                 </tr>
               ))}
+              <tr className="tableTotalRow">
+                <td colSpan="3">Total</td>
+                <td>{money(detailedRowsTotal)}</td>
+              </tr>
             </tbody>
           </table>
         </section>
 
-        {showPrice && canGeneratePrice ? (
-          <section className="printPrice">
-            <p>
-              <strong>Preço:</strong> {money(total)}
-            </p>
-          </section>
-        ) : null}
       </section>
     </main>
   );
