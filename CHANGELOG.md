@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-07-22
+- Restored the site accent color from blue back to gray.
+- Updated the on-screen footer version text to `PaperPushers 2026 - v1.4`.
+
 ## 2026-07-16
 - Updated the site accent/background color to `#3498DB` while keeping the main text color dark.
 - Changed the detailed budget table to show mandatory add-ons as soon as an `IS2` model is selected.

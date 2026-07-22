@@ -75,7 +75,7 @@ const MANDATORY_ADDONS_DEF = {
 
 const DEFAULT_STYLEGUIDE = {
   main_dark: "#292929",
-  secondary_dark: "#3498DB",
+  secondary_dark: "#777777",
   secondary_white: "#D1D1D1",
   off_white: "#F0EEE9",
   main_white: "#FFFFFF",
@@ -1090,7 +1090,7 @@ export default function App() {
 
         <footer className="footer">
           <a href="https://paperpushers.biz" target="_blank" rel="noreferrer">
-            PaperPushers 2026 - v1.3
+            PaperPushers 2026 - v1.4
           </a>
         </footer>
       </div>
