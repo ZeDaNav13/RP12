@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-07-24
+- Hid per-line prices again from the detailed list and PDF output.
+- Kept only the total price visible, still gated behind the existing view button.
+- Updated the footer version text to `PaperPushers 2026 - v1.5`.
+
 ## 2026-07-22
 - Restored the site accent color from blue back to gray.
 - Updated the on-screen footer version text to `PaperPushers 2026 - v1.4`.

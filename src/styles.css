@@ -412,20 +412,9 @@ td {
   background: var(--secondary-white);
 }
 
-th:last-child,
-td:last-child {
-  text-align: right;
-  white-space: nowrap;
-}
-
 .rightCell {
   text-align: right;
   white-space: nowrap;
-}
-
-.tableTotalRow td {
-  font-weight: 700;
-  background: var(--white);
 }
 
 .footer {

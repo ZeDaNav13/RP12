@@ -708,11 +708,6 @@ export default function App() {
     (row) => row.selection && !isNoneSelection(row.selection)
   );
 
-  const detailedRowsTotal = useMemo(
-    () => detailedRowsWithValue.reduce((sum, row) => sum + (row.price ?? 0), 0),
-    [detailedRowsWithValue]
-  );
-
   const printedAt = useMemo(
     () =>
       new Intl.DateTimeFormat("pt-PT", {
@@ -1051,31 +1046,23 @@ export default function App() {
                   <th>Item</th>
                   <th>Selecção</th>
                   <th>Código</th>
-                  <th>Preço</th>
                 </tr>
               </thead>
               <tbody>
                 {detailedRowsWithValue.length === 0 ? (
                   <tr>
-                    <td colSpan="4" className="muted">
+                    <td colSpan="3" className="muted">
                       Sem componentes selecionados.
                     </td>
                   </tr>
                 ) : (
-                  <>
-                    {detailedRowsWithValue.map((row) => (
-                      <tr key={row.id}>
-                        <td>{row.question}</td>
-                        <td>{row.selection}</td>
-                        <td>{row.code}</td>
-                        <td>{money(row.price ?? 0)}</td>
-                      </tr>
-                    ))}
-                    <tr className="tableTotalRow">
-                      <td colSpan="3">Total</td>
-                      <td>{money(detailedRowsTotal)}</td>
+                  detailedRowsWithValue.map((row) => (
+                    <tr key={row.id}>
+                      <td>{row.question}</td>
+                      <td>{row.selection}</td>
+                      <td>{row.code}</td>
                     </tr>
-                  </>
+                  ))
                 )}
               </tbody>
             </table>
@@ -1090,7 +1077,7 @@ export default function App() {
 
         <footer className="footer">
           <a href="https://paperpushers.biz" target="_blank" rel="noreferrer">
-            PaperPushers 2026 - v1.4
+            PaperPushers 2026 - v1.5
           </a>
         </footer>
       </div>
@@ -1138,7 +1125,6 @@ export default function App() {
                 <th>Item</th>
                 <th>Selecção</th>
                 <th>Código</th>
-                <th>Preço</th>
               </tr>
             </thead>
             <tbody>
@@ -1147,16 +1133,19 @@ export default function App() {
                   <td>{row.question}</td>
                   <td>{row.selection}</td>
                   <td>{row.code}</td>
-                  <td>{money(row.price ?? 0)}</td>
                 </tr>
               ))}
-              <tr className="tableTotalRow">
-                <td colSpan="3">Total</td>
-                <td>{money(detailedRowsTotal)}</td>
-              </tr>
             </tbody>
           </table>
         </section>
+
+        {showPrice && canGeneratePrice ? (
+          <section className="printSummary">
+            <p>
+              <strong>Preço:</strong> {money(total)}
+            </p>
+          </section>
+        ) : null}
 
       </section>
     </main>
