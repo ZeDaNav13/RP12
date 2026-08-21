@@ -8,6 +8,7 @@ Production deployment is static-only: build locally/CI, then publish the `dist/`
 - Full repository source code (recommended), OR
 - Just the built output (`dist/`) for one-off delivery.
 - Standard client upload package: `mdc_tool_ready_to_upload.zip`
+- Versioned client upload package: `mdc_tool_ready_to_upload_vX.Y.zip`
 
 Important runtime data is in:
 - `public/questions/*.csv`
@@ -50,6 +51,7 @@ npm run release:client
 This refreshes:
 - `release/mdc_tool/`
 - `mdc_tool_ready_to_upload.zip`
+- `mdc_tool_ready_to_upload_vX.Y.zip` using `release-version.json`
 
 ### A) Deploy at domain root (recommended)
 Example: `https://client-domain.com/`
@@ -93,6 +95,15 @@ To change options/prices/codes:
 2. Update `public/styleguide.json` too if colors changed
 3. Run `npm run release:client`
 4. Upload the refreshed `mdc_tool_ready_to_upload.zip` or replace deployed static files with the new `release/mdc_tool/`
+
+## 6A) Session close-out procedure
+
+When finishing a releasable work session:
+1. Update `release-version.json`
+2. Update `CHANGELOG.md`
+3. Run `npm run release:client`
+4. Commit and push to GitHub
+5. Send the versioned zip generated from the current version
 
 ## 7) Quick validation checklist after deploy
 

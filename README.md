@@ -7,6 +7,7 @@ Static Vite + React configurator used to assemble RP12 budgets, generate the on-
 - `src/` - app UI and configurator logic
 - `public/questions/` - editable CSV data that drives the dropdowns
 - `public/styleguide.json` - client-adjustable color tokens
+- `release-version.json` - single source of truth for the shipped app version tag
 - `scripts/generate-combinations.mjs` - rebuilds `all_reply_combinations_filtered.csv`
 - `scripts/prepare-client-release.mjs` - assembles the upload-ready client package
 - `release/mdc_tool/` - generated folder for server upload
@@ -51,6 +52,17 @@ That command:
 2. Rebuilds `release/mdc_tool/`
 3. Copies the current client-facing docs and editable data files
 4. Refreshes `mdc_tool_ready_to_upload.zip`
+5. Creates the versioned client zip from `release-version.json` (example: `mdc_tool_ready_to_upload_v1.5.zip`)
+
+## Session Close-Out
+
+Use this procedure at the end of a work session you intend to ship:
+
+1. Update `release-version.json`
+2. Update `CHANGELOG.md`
+3. Run `npm run release:client`
+4. Commit and push the repo to GitHub
+5. Send the versioned zip file created by the release command
 
 ## Editable client data
 

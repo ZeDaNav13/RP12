@@ -307,6 +307,10 @@ function buildPumpCombinations(questionRows) {
   return combinations;
 }
 
+function normalizeAssemblyCode(value) {
+  return value.replace(/\s+/g, "").replace(/_+/g, "_");
+}
+
 function hasSelectedCode(codes) {
   return codes.some((code) => code !== "-");
 }
@@ -352,15 +356,17 @@ function buildOutputRows(questionRows) {
           0
         );
         const mandatoryAddOnsSummary = mandatoryAddOns.map((row) => row.option).join(" + ");
-        const assemblyCode = [
-          `MDC_iS.${defaultAssemblyCode(questionRows, "is2_modelo", modelo.option) || "-"}`,
-          pumpCombination.pumpSegment,
-          sondaSegment,
-          portaSondasCode,
-          bdwEnabled ? "BDW" : ""
-        ]
-          .filter(Boolean)
-          .join("_");
+        const assemblyCode = normalizeAssemblyCode(
+          [
+            `MDC_iS.${defaultAssemblyCode(questionRows, "is2_modelo", modelo.option) || "-"}`,
+            pumpCombination.pumpSegment,
+            sondaSegment,
+            portaSondasCode,
+            bdwEnabled ? "BDW" : ""
+          ]
+            .filter(Boolean)
+            .join("_")
+        );
         if (seenAssemblyCodes.has(assemblyCode)) {
           continue;
         }

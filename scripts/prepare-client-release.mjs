@@ -11,6 +11,7 @@ const distDir = path.join(rootDir, "dist");
 const releaseRootDir = path.join(rootDir, "release");
 const releaseDir = path.join(releaseRootDir, "mdc_tool");
 const zipFile = path.join(rootDir, "mdc_tool_ready_to_upload.zip");
+const versionFile = path.join(rootDir, "release-version.json");
 
 const filesToCopy = [
   "README_for_client.txt",
@@ -65,18 +66,32 @@ async function main() {
 }
 
 async function createZip() {
+  const versionedZipFile = await getVersionedZipFile();
   try {
     await execFileAsync(
       "zip",
       ["-r", "-q", "-FS", zipFile, "mdc_tool"],
       { cwd: releaseRootDir }
     );
+    await fs.copyFile(zipFile, versionedZipFile);
   } catch (error) {
     if (error.code === "ENOENT") {
       throw new Error("The `zip` command is not available on this machine.");
     }
     throw error;
   }
+}
+
+async function getVersionedZipFile() {
+  const contents = await fs.readFile(versionFile, "utf8");
+  const config = JSON.parse(contents);
+  const version = String(config.version ?? "").trim();
+
+  if (!/^v\d+(?:\.\d+)*$/.test(version)) {
+    throw new Error("Invalid version in release-version.json. Expected format like `v1.5`.");
+  }
+
+  return path.join(rootDir, `mdc_tool_ready_to_upload_${version}.zip`);
 }
 
 main().catch((error) => {

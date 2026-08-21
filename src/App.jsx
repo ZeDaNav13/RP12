@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import releaseVersion from "../release-version.json";
 import logo from "./assets/Logo_iS2-removebg-preview.png";
 import printLogo from "./assets/iS2 Logo Fundo Branco.png";
 
@@ -100,6 +101,7 @@ const PHC_REFERENCE_PREFIX = "534.iS2";
 const PHC_REFERENCE_START = 1n;
 const PHC_REFERENCE_WIDTH = 11;
 const EMPTY_OPTION = "";
+const APP_VERSION = releaseVersion.version;
 
 function phcReferenceForIndex(index) {
   const number = PHC_REFERENCE_START + BigInt(index);
@@ -381,20 +383,26 @@ function buildPumpCombinations(questionRows) {
   return combinations;
 }
 
+function normalizeAssemblyCode(value) {
+  return value.replace(/\s+/g, "").replace(/_+/g, "_");
+}
+
 function buildAssemblyCode(questionRows, modelOption, pumpSegment, probeCodes, cloroOption, circuito) {
   const sondaSegment = formatSondaSegment(probeCodes, cloroOption);
   const portaSondasCode = resolvePortaSondasCode(probeCodes, cloroOption);
   const bdwSegment = needsBDW(questionRows, circuito) ? "BDW" : "";
 
-  return [
-    `MDC_iS.${defaultAssemblyCode(questionRows, "is2_modelo", modelOption) || "-"}`,
-    pumpSegment,
-    sondaSegment,
-    portaSondasCode,
-    bdwSegment
-  ]
-    .filter(Boolean)
-    .join("_");
+  return normalizeAssemblyCode(
+    [
+      `MDC_iS.${defaultAssemblyCode(questionRows, "is2_modelo", modelOption) || "-"}`,
+      pumpSegment,
+      sondaSegment,
+      portaSondasCode,
+      bdwSegment
+    ]
+      .filter(Boolean)
+      .join("_")
+  );
 }
 
 function buildUniqueAssemblyCodes(questionRows) {
@@ -1077,7 +1085,7 @@ export default function App() {
 
         <footer className="footer">
           <a href="https://paperpushers.biz" target="_blank" rel="noreferrer">
-            PaperPushers 2026 - v1.5
+            {`PaperPushers 2026 - ${APP_VERSION}`}
           </a>
         </footer>
       </div>

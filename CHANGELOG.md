@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-08-21
+- Added `release-version.json` as the single source of truth for the shipped app version.
+- Updated the footer to read the version from `release-version.json`.
+- Updated the release packaging step to generate both `mdc_tool_ready_to_upload.zip` and `mdc_tool_ready_to_upload_vX.Y.zip`.
+- Documented a standard end-of-session release procedure covering version bump, changelog update, packaging, GitHub push, and client zip delivery.
+
 ## 2026-07-24
 - Hid per-line prices again from the detailed list and PDF output.
 - Kept only the total price visible, still gated behind the existing view button.
