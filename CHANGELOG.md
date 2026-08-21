@@ -1,6 +1,7 @@
 # Changelog
 
 ## 2026-08-21
+- Corrected the formal release tag for this shipped close-out to `v1.6`.
 - Added `release-version.json` as the single source of truth for the shipped app version.
 - Updated the footer to read the version from `release-version.json`.
 - Updated the release packaging step to generate both `mdc_tool_ready_to_upload.zip` and `mdc_tool_ready_to_upload_vX.Y.zip`.
