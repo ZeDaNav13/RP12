@@ -3,7 +3,11 @@ import releaseVersion from "../release-version.json";
 import logo from "./assets/Logo_iS2-removebg-preview.png";
 import printLogo from "./assets/iS2 Logo Fundo Branco.png";
 import { resolveIs2ModelCode } from "./domain/mdc.js";
-import { sortTechnicalAbsenceLast } from "./domain/options.js";
+import {
+  isTechnicalAbsenceRow,
+  isTechnicalAbsenceSelection,
+  sortTechnicalAbsenceLast
+} from "./domain/options.js";
 
 const QUESTION_DEFS = [
   {
@@ -114,20 +118,13 @@ function keyFor(questionId, option) {
   return `${questionId}:${option}`;
 }
 
-function isNoneSelection(selection) {
-  return /^(nenhum|sem)/i.test((selection ?? "").trim());
-}
-
-function getNoneOption(rows) {
-  return rows.map((row) => row.option).find((option) => /^(nenhum|sem)/i.test(option.trim())) ?? "";
-}
-
 function buildEmptyAnswers() {
   return Object.fromEntries(QUESTION_DEFS.map((question) => [question.id, EMPTY_OPTION]));
 }
 
-function isProbeOptionVisibleForCircuit(circuito, openCoolingWaterType, option) {
-  if (isNoneSelection(option)) return true;
+function isProbeOptionVisibleForCircuit(circuito, openCoolingWaterType, row) {
+  if (isTechnicalAbsenceRow(row)) return true;
+  const option = row.option;
   if (circuito === OPEN_COOLING_CIRCUIT) {
     return openCoolingWaterType === "Água Suja" ? /\bAS2\b/i.test(option) : /\bCS4\b/i.test(option);
   }
@@ -138,7 +135,7 @@ function isProbeOptionVisibleForCircuit(circuito, openCoolingWaterType, option) 
 function getProbeRowsForCircuit(rows, questionId, circuito, openCoolingWaterType) {
   if (questionId !== "sonda_cloro") return rows;
   return rows.filter((row) =>
-    isProbeOptionVisibleForCircuit(circuito, openCoolingWaterType, row.option)
+    isProbeOptionVisibleForCircuit(circuito, openCoolingWaterType, row)
   );
 }
 
@@ -221,6 +218,10 @@ function getOptionPrice(questionRows, questionId, option) {
 
 function getDisplayQuestionRows(questionRows, questionId) {
   return sortTechnicalAbsenceLast(questionRows[questionId] ?? []);
+}
+
+function isQuestionSelectionAbsent(questionRows, questionId, selectedOption) {
+  return isTechnicalAbsenceSelection(questionRows[questionId] ?? [], selectedOption);
 }
 
 function defaultAssemblyCode(questionRows, questionId, option) {
@@ -314,12 +315,14 @@ function needsBDW(questionRows, circuito) {
   return isTruthyFlag(circuitoRow?.bdw_enabled);
 }
 
-function hasSelectedModel(modelOption) {
-  return Boolean(modelOption) && !isNoneSelection(modelOption);
+function hasSelectedModel(questionRows, modelOption) {
+  return Boolean(modelOption) && !isQuestionSelectionAbsent(questionRows, "is2_modelo", modelOption);
 }
 
 function getMandatoryAddOns(questionRows, modelOption) {
-  return hasSelectedModel(modelOption) ? questionRows[MANDATORY_ADDONS_DEF.id] ?? [] : [];
+  return hasSelectedModel(questionRows, modelOption)
+    ? questionRows[MANDATORY_ADDONS_DEF.id] ?? []
+    : [];
 }
 
 function buildDetailRow(id, question, selection, code, price) {
@@ -334,7 +337,7 @@ function buildDetailRow(id, question, selection, code, price) {
 
 function buildCircuitVariants(questionRows) {
   return (questionRows[CIRCUITO_DEF.id] ?? [])
-    .filter((row) => !isNoneSelection(row.option))
+    .filter((row) => !isTechnicalAbsenceRow(row))
     .flatMap((circuitoRow) => {
       if (circuitoRow.option !== OPEN_COOLING_CIRCUIT) {
         return [{ circuito: circuitoRow.option, openCoolingWaterType: "" }];
@@ -411,7 +414,7 @@ function buildAssemblyCode(questionRows, modelOption, pumpSegment, probeCodes, c
 }
 
 function buildUniqueAssemblyCodes(questionRows) {
-  const modelRows = (questionRows.is2_modelo ?? []).filter((row) => !isNoneSelection(row.option));
+  const modelRows = (questionRows.is2_modelo ?? []).filter((row) => !isTechnicalAbsenceRow(row));
   const pumpCombinations = buildPumpCombinations(questionRows);
   const circuitVariants = buildCircuitVariants(questionRows);
   const assemblyCodes = [];
@@ -718,7 +721,7 @@ export default function App() {
   }, [answers, circuito, openCoolingWaterType, questionRows]);
 
   const detailedRowsWithValue = detailedRows.filter(
-    (row) => row.selection && !isNoneSelection(row.selection)
+    (row) => row.selection && !isTechnicalAbsenceRow(row)
   );
 
   const printedAt = useMemo(
@@ -758,7 +761,7 @@ export default function App() {
         uniqueAssemblyCodes,
         assemblyLine,
         canGeneratePrice,
-        !isNoneSelection(answers.is2_modelo),
+        !isQuestionSelectionAbsent(questionRows, "is2_modelo", answers.is2_modelo),
         Boolean(circuito)
       ),
     [answers.is2_modelo, assemblyLine, canGeneratePrice, circuito, uniqueAssemblyCodes]

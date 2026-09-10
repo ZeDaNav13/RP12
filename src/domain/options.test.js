@@ -1,7 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { isTechnicalAbsenceRow, sortTechnicalAbsenceLast } from "./options.js";
+import {
+  isTechnicalAbsenceRow,
+  isTechnicalAbsenceSelection,
+  sortTechnicalAbsenceLast
+} from "./options.js";
 
 test("isTechnicalAbsenceRow uses only the technical absence codes", () => {
   assert.equal(isTechnicalAbsenceRow({ option: "Installed option", code: "-" }), true);
@@ -9,6 +13,24 @@ test("isTechnicalAbsenceRow uses only the technical absence codes", () => {
   assert.equal(isTechnicalAbsenceRow({ option: "Nenhum special label", code: "REAL" }), false);
   assert.equal(isTechnicalAbsenceRow({ option: "Sem code", code: "" }), false);
   assert.equal(isTechnicalAbsenceRow({ option: "Missing code" }), false);
+});
+
+test("isTechnicalAbsenceSelection resolves absence from the selected row technical code", () => {
+  const hyphenRows = [
+    { option: "Disabled by client", code: "-" },
+    { option: "Real option", code: "REAL" }
+  ];
+  const underscoreRows = [
+    { option: "No equipment selected", code: "_" },
+    { option: "Model A", code: "CP10" }
+  ];
+  const misleadingLabelRows = [{ option: "Nenhum special product", code: "REAL" }];
+
+  assert.equal(isTechnicalAbsenceSelection(hyphenRows, "Disabled by client"), true);
+  assert.equal(isTechnicalAbsenceSelection(underscoreRows, "No equipment selected"), true);
+  assert.equal(isTechnicalAbsenceSelection(misleadingLabelRows, "Nenhum special product"), false);
+  assert.equal(isTechnicalAbsenceSelection(hyphenRows, "Unknown selection"), false);
+  assert.equal(isTechnicalAbsenceSelection(hyphenRows, ""), false);
 });
 
 test("sortTechnicalAbsenceLast moves a renamed hyphen absence row after stable substantive rows", () => {
