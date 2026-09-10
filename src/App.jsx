@@ -3,6 +3,7 @@ import releaseVersion from "../release-version.json";
 import logo from "./assets/Logo_iS2-removebg-preview.png";
 import printLogo from "./assets/iS2 Logo Fundo Branco.png";
 import { resolveIs2ModelCode } from "./domain/mdc.js";
+import { sortTechnicalAbsenceLast } from "./domain/options.js";
 
 const QUESTION_DEFS = [
   {
@@ -216,6 +217,10 @@ function getOptionRow(questionRows, questionId, option) {
 
 function getOptionPrice(questionRows, questionId, option) {
   return getOptionRow(questionRows, questionId, option)?.price ?? 0;
+}
+
+function getDisplayQuestionRows(questionRows, questionId) {
+  return sortTechnicalAbsenceLast(questionRows[questionId] ?? []);
 }
 
 function defaultAssemblyCode(questionRows, questionId, option) {
@@ -772,7 +777,7 @@ export default function App() {
   const showOpenCoolingWaterType = circuito === OPEN_COOLING_CIRCUIT;
 
   const circuitoOptions = useMemo(
-    () => (questionRows[CIRCUITO_DEF.id] ?? []).map((row) => row.option),
+    () => getDisplayQuestionRows(questionRows, CIRCUITO_DEF.id).map((row) => row.option),
     [questionRows]
   );
 
@@ -781,11 +786,13 @@ export default function App() {
       Object.fromEntries(
         probeQuestionIds.map((questionId) => [
           questionId,
-          getProbeRowsForCircuit(
-            questionRows[questionId] ?? [],
-            questionId,
-            circuito,
-            openCoolingWaterType
+          sortTechnicalAbsenceLast(
+            getProbeRowsForCircuit(
+              questionRows[questionId] ?? [],
+              questionId,
+              circuito,
+              openCoolingWaterType
+            )
           )
         ])
       ),
@@ -870,7 +877,7 @@ export default function App() {
                     onChange={(e) => handleModelChange(e.target.value)}
                   >
                     <option value="" hidden />
-                    {(questionRows[q.id] ?? []).map((row) => (
+                    {getDisplayQuestionRows(questionRows, q.id).map((row) => (
                       <option key={row.option} value={row.option}>
                         {row.option}
                       </option>
@@ -927,7 +934,7 @@ export default function App() {
                     onChange={(e) => handleQuestionChange(q.id, e.target.value)}
                   >
                     <option value="" hidden />
-                    {(questionRows[q.id] ?? []).map((row) => (
+                    {getDisplayQuestionRows(questionRows, q.id).map((row) => (
                       <option key={row.option} value={row.option}>
                         {row.option}
                       </option>
