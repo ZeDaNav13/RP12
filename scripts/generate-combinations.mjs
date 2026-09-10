@@ -2,6 +2,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { isChlorineRowCompatible, OPEN_COOLING_WATER_TYPES } from "../src/domain/compatibility.js";
 import { isTechnicalAbsenceRow, isTechnicalAbsenceSelection } from "../src/domain/options.js";
 import { resolveIs2ModelCode } from "../src/domain/mdc.js";
 
@@ -27,9 +28,7 @@ const bdwDef = { id: "bdw", csvFile: "bdw.csv" };
 const mandatoryAddOnsDef = { id: "mandatory_addons", csvFile: "mandatory_addons.csv" };
 
 const probeQuestionIds = ["sonda_cloro", "sonda_ph", "sonda_condutividade"];
-const openCoolingCircuit = "Circuito Aberto de Arrefecimento";
-const sanitaryHotWaterCircuit = "Água Quente Sanitária";
-const openCoolingWaterTypes = ["Água Limpa", "Água Suja"];
+const openCoolingWaterTypes = OPEN_COOLING_WATER_TYPES;
 const phcReferencePrefix = "534.iS2";
 const phcReferenceStart = 1n;
 const phcReferenceWidth = 11;
@@ -118,20 +117,14 @@ async function loadRows() {
   return Object.fromEntries(entries);
 }
 
-function isProbeOptionVisibleForCircuit(circuito, openCoolingWaterType, row) {
-  if (isTechnicalAbsenceRow(row)) return true;
-  const option = row.option;
-  if (circuito === openCoolingCircuit) {
-    return openCoolingWaterType === "Água Suja" ? /\bAS2\b/i.test(option) : /\bCS4\b/i.test(option);
-  }
-  if (circuito === sanitaryHotWaterCircuit) return /\bAS3\b/i.test(option);
-  return /\bCS4\b/i.test(option);
+function isProbeOptionVisibleForCircuit(circuitClass, openCoolingWaterType, row) {
+  return isChlorineRowCompatible(row, circuitClass, openCoolingWaterType);
 }
 
-function getProbeRowsForCircuit(rows, questionId, circuito, openCoolingWaterType) {
+function getProbeRowsForCircuit(rows, questionId, circuitClass, openCoolingWaterType) {
   if (questionId !== "sonda_cloro") return rows;
   return rows.filter((row) =>
-    isProbeOptionVisibleForCircuit(circuito, openCoolingWaterType, row)
+    isProbeOptionVisibleForCircuit(circuitClass, openCoolingWaterType, row)
   );
 }
 
@@ -267,12 +260,14 @@ function cartesian(rows) {
 
 function buildCircuitVariants(questionRows) {
   return questionRows.circuito.filter((row) => !isTechnicalAbsenceRow(row)).flatMap((circuitoRow) => {
-    if (circuitoRow.option !== openCoolingCircuit) {
-      return [{ circuitoRow, openCoolingWaterType: "" }];
+    const circuitClass = circuitoRow.circuit_class ?? "general";
+    if (circuitClass !== "open_cooling") {
+      return [{ circuitoRow, circuitClass, openCoolingWaterType: "" }];
     }
 
     return openCoolingWaterTypes.map((openCoolingWaterType) => ({
       circuitoRow,
+      circuitClass,
       openCoolingWaterType
     }));
   });
@@ -329,10 +324,10 @@ function buildOutputRows(questionRows) {
   for (const baseCombination of baseCombinations) {
     const [modelo, pumpCombination] = baseCombination;
 
-    for (const { circuitoRow, openCoolingWaterType } of circuitVariants) {
+    for (const { circuitoRow, circuitClass, openCoolingWaterType } of circuitVariants) {
       const circuito = circuitoRow.option;
       const probeLists = probeQuestionIds.map((questionId) =>
-        getProbeRowsForCircuit(questionRows[questionId], questionId, circuito, openCoolingWaterType)
+        getProbeRowsForCircuit(questionRows[questionId], questionId, circuitClass, openCoolingWaterType)
       );
 
       for (const [sondaCloro, sondaPh, sondaCondutividade] of cartesian(probeLists)) {

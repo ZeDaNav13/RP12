@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import releaseVersion from "../release-version.json";
 import logo from "./assets/Logo_iS2-removebg-preview.png";
 import printLogo from "./assets/iS2 Logo Fundo Branco.png";
+import { isChlorineRowCompatible, OPEN_COOLING_WATER_TYPES } from "./domain/compatibility.js";
 import { resolveIs2ModelCode } from "./domain/mdc.js";
 import {
   isTechnicalAbsenceRow,
@@ -100,9 +101,7 @@ const pumpQuestionIds = [
 ];
 
 const probeQuestionIds = ["sonda_cloro", "sonda_ph", "sonda_condutividade"];
-const OPEN_COOLING_CIRCUIT = "Circuito Aberto de Arrefecimento";
-const SANITARY_HOT_WATER_CIRCUIT = "Água Quente Sanitária";
-const openCoolingWaterTypes = ["Água Limpa", "Água Suja"];
+const openCoolingWaterTypes = OPEN_COOLING_WATER_TYPES;
 const PHC_REFERENCE_PREFIX = "534.iS2";
 const PHC_REFERENCE_START = 1n;
 const PHC_REFERENCE_WIDTH = 11;
@@ -122,20 +121,14 @@ function buildEmptyAnswers() {
   return Object.fromEntries(QUESTION_DEFS.map((question) => [question.id, EMPTY_OPTION]));
 }
 
-function isProbeOptionVisibleForCircuit(circuito, openCoolingWaterType, row) {
-  if (isTechnicalAbsenceRow(row)) return true;
-  const option = row.option;
-  if (circuito === OPEN_COOLING_CIRCUIT) {
-    return openCoolingWaterType === "Água Suja" ? /\bAS2\b/i.test(option) : /\bCS4\b/i.test(option);
-  }
-  if (circuito === SANITARY_HOT_WATER_CIRCUIT) return /\bAS3\b/i.test(option);
-  return /\bCS4\b/i.test(option);
+function isProbeOptionVisibleForCircuit(circuitClass, openCoolingWaterType, row) {
+  return isChlorineRowCompatible(row, circuitClass, openCoolingWaterType);
 }
 
-function getProbeRowsForCircuit(rows, questionId, circuito, openCoolingWaterType) {
+function getProbeRowsForCircuit(rows, questionId, circuitClass, openCoolingWaterType) {
   if (questionId !== "sonda_cloro") return rows;
   return rows.filter((row) =>
-    isProbeOptionVisibleForCircuit(circuito, openCoolingWaterType, row)
+    isProbeOptionVisibleForCircuit(circuitClass, openCoolingWaterType, row)
   );
 }
 
@@ -210,6 +203,10 @@ function parseCsv(text) {
 function getOptionRow(questionRows, questionId, option) {
   if (!option) return null;
   return (questionRows[questionId] ?? []).find((row) => row.option === option) ?? null;
+}
+
+function getCircuitClass(questionRows, circuito) {
+  return getOptionRow(questionRows, CIRCUITO_DEF.id, circuito)?.circuit_class ?? "general";
 }
 
 function getOptionPrice(questionRows, questionId, option) {
@@ -339,12 +336,14 @@ function buildCircuitVariants(questionRows) {
   return (questionRows[CIRCUITO_DEF.id] ?? [])
     .filter((row) => !isTechnicalAbsenceRow(row))
     .flatMap((circuitoRow) => {
-      if (circuitoRow.option !== OPEN_COOLING_CIRCUIT) {
-        return [{ circuito: circuitoRow.option, openCoolingWaterType: "" }];
+      const circuitClass = circuitoRow.circuit_class ?? "general";
+      if (circuitClass !== "open_cooling") {
+        return [{ circuito: circuitoRow.option, circuitClass, openCoolingWaterType: "" }];
       }
 
       return openCoolingWaterTypes.map((type) => ({
         circuito: circuitoRow.option,
+        circuitClass,
         openCoolingWaterType: type
       }));
     });
@@ -422,12 +421,12 @@ function buildUniqueAssemblyCodes(questionRows) {
 
   for (const modelRow of modelRows) {
     for (const pumpCombination of pumpCombinations) {
-      for (const { circuito, openCoolingWaterType } of circuitVariants) {
+      for (const { circuito, circuitClass, openCoolingWaterType } of circuitVariants) {
         const probeLists = probeQuestionIds.map((questionId) =>
           getProbeRowsForCircuit(
             questionRows[questionId] ?? [],
             questionId,
-            circuito,
+            circuitClass,
             openCoolingWaterType
           )
         );
@@ -594,6 +593,11 @@ export default function App() {
     });
   }, [questionRows]);
 
+  const circuitClass = useMemo(
+    () => getCircuitClass(questionRows, circuito),
+    [circuito, questionRows]
+  );
+
   useEffect(() => {
     if (Object.keys(questionRows).length === 0) return;
 
@@ -605,7 +609,7 @@ export default function App() {
         const visibleRows = getProbeRowsForCircuit(
           questionRows[questionId] ?? [],
           questionId,
-          circuito,
+          circuitClass,
           openCoolingWaterType
         );
         const visibleOptions = visibleRows.map((row) => row.option);
@@ -619,7 +623,7 @@ export default function App() {
 
       return changed ? next : prev;
     });
-  }, [circuito, openCoolingWaterType, questionRows]);
+  }, [circuitClass, openCoolingWaterType, questionRows]);
 
   const total = useMemo(() => {
     const baseTotal = QUESTION_DEFS.reduce((sum, q) => {
@@ -692,7 +696,7 @@ export default function App() {
 
     if (needsBDW(questionRows, circuito)) {
       const circuitoSelection =
-        circuito === OPEN_COOLING_CIRCUIT ? `${circuito} - ${openCoolingWaterType}` : circuito;
+        circuitClass === "open_cooling" ? `${circuito} - ${openCoolingWaterType}` : circuito;
 
       rows.push(
         buildDetailRow(
@@ -718,7 +722,7 @@ export default function App() {
     });
 
     return rows;
-  }, [answers, circuito, openCoolingWaterType, questionRows]);
+  }, [answers, circuitClass, circuito, openCoolingWaterType, questionRows]);
 
   const detailedRowsWithValue = detailedRows.filter(
     (row) => row.selection && !isTechnicalAbsenceRow(row)
@@ -777,7 +781,7 @@ export default function App() {
     [circuito, questionRows]
   );
 
-  const showOpenCoolingWaterType = circuito === OPEN_COOLING_CIRCUIT;
+  const showOpenCoolingWaterType = circuitClass === "open_cooling";
 
   const circuitoOptions = useMemo(
     () => getDisplayQuestionRows(questionRows, CIRCUITO_DEF.id).map((row) => row.option),
@@ -793,13 +797,13 @@ export default function App() {
             getProbeRowsForCircuit(
               questionRows[questionId] ?? [],
               questionId,
-              circuito,
+              circuitClass,
               openCoolingWaterType
             )
           )
         ])
       ),
-    [circuito, openCoolingWaterType, questionRows]
+    [circuitClass, openCoolingWaterType, questionRows]
   );
 
   const copyToClipboard = async (text) => {

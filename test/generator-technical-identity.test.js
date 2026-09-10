@@ -78,6 +78,23 @@ function technicalIdentities(rows) {
   }));
 }
 
+function compatibilityTechnicalIdentities(rows) {
+  return rows.map((row) => ({
+    referencia_phc: row.referencia_phc,
+    is2_modelo_code: row.is2_modelo_code,
+    pump_combo_code: row.pump_combo_code,
+    pump_segment: row.pump_segment,
+    sonda_cloro_code: row.sonda_cloro_code,
+    sonda_ph_code: row.sonda_ph_code,
+    sonda_condutividade_code: row.sonda_condutividade_code,
+    circuito_agua_tipo: row.circuito_agua_tipo,
+    circuito_bdw_enabled: row.circuito_bdw_enabled,
+    porta_sondas_code: row.porta_sondas_code,
+    bdw_code: row.bdw_code,
+    assembly_code: row.assembly_code
+  }));
+}
+
 async function createGeneratorFixture() {
   const fixtureRoot = await fs.mkdtemp(path.join(os.tmpdir(), "rp12-generator-"));
 
@@ -94,6 +111,10 @@ async function createGeneratorFixture() {
   await fs.copyFile(
     path.join(rootDir, "src", "domain", "mdc.js"),
     path.join(fixtureRoot, "src", "domain", "mdc.js")
+  );
+  await fs.copyFile(
+    path.join(rootDir, "src", "domain", "compatibility.js"),
+    path.join(fixtureRoot, "src", "domain", "compatibility.js")
   );
   await fs.cp(path.join(rootDir, "public", "questions"), path.join(fixtureRoot, "public", "questions"), {
     recursive: true
@@ -139,4 +160,31 @@ test("generator keeps technical identities when editable absence and model label
     )
   );
   assert.deepEqual(technicalIdentities(fixtureRows), technicalIdentities(canonicalRows));
+});
+
+test("generator compatibility ignores editable circuit and chlorine labels", async (context) => {
+  const fixtureRoot = await createGeneratorFixture();
+  context.after(() => fs.rm(fixtureRoot, { recursive: true, force: true }));
+
+  const circuitRenames = [
+    ["Circuito Aberto de Arrefecimento", "Circuit renamed 1"],
+    ["Água Quente Sanitária", "Circuit renamed 2"],
+    ["Água Consumo Humano", "Circuit renamed 3"],
+    ["Piscinas", "Circuit renamed 4"],
+    ["Outros", "Circuit renamed 5"]
+  ];
+
+  for (const [currentOption, renamedOption] of circuitRenames) {
+    await renameFixtureOption(fixtureRoot, "circuito.csv", currentOption, renamedOption);
+  }
+  await renameFixtureOption(fixtureRoot, "sonda_cloro.csv", "Cloro 0-2 mA Reiss CS4", "Chlorine alpha");
+  await renameFixtureOption(fixtureRoot, "sonda_cloro.csv", "Cloro Reiss AS2 mA 0-5/0-1.7 c/RV1", "Chlorine beta");
+
+  await execFileAsync(process.execPath, ["scripts/generate-combinations.mjs"], { cwd: fixtureRoot });
+
+  const canonicalRows = parseCsv(await fs.readFile(path.join(rootDir, "all_reply_combinations_filtered.csv"), "utf8"));
+  const fixtureRows = parseCsv(await fs.readFile(path.join(fixtureRoot, "all_reply_combinations_filtered.csv"), "utf8"));
+
+  assert.equal(fixtureRows.length, 5940);
+  assert.deepEqual(compatibilityTechnicalIdentities(fixtureRows), compatibilityTechnicalIdentities(canonicalRows));
 });
