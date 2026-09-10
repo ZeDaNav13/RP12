@@ -2,6 +2,9 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { isTechnicalAbsenceRow, isTechnicalAbsenceSelection } from "../src/domain/options.js";
+import { resolveIs2ModelCode } from "../src/domain/mdc.js";
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(__dirname, "..");
 const questionsDir = path.join(rootDir, "public", "questions");
@@ -115,12 +118,9 @@ async function loadRows() {
   return Object.fromEntries(entries);
 }
 
-function isNoneSelection(selection) {
-  return /^(nenhum|sem)/i.test((selection ?? "").trim());
-}
-
-function isProbeOptionVisibleForCircuit(circuito, openCoolingWaterType, option) {
-  if (isNoneSelection(option)) return true;
+function isProbeOptionVisibleForCircuit(circuito, openCoolingWaterType, row) {
+  if (isTechnicalAbsenceRow(row)) return true;
+  const option = row.option;
   if (circuito === openCoolingCircuit) {
     return openCoolingWaterType === "Água Suja" ? /\bAS2\b/i.test(option) : /\bCS4\b/i.test(option);
   }
@@ -131,7 +131,7 @@ function isProbeOptionVisibleForCircuit(circuito, openCoolingWaterType, option) 
 function getProbeRowsForCircuit(rows, questionId, circuito, openCoolingWaterType) {
   if (questionId !== "sonda_cloro") return rows;
   return rows.filter((row) =>
-    isProbeOptionVisibleForCircuit(circuito, openCoolingWaterType, row.option)
+    isProbeOptionVisibleForCircuit(circuito, openCoolingWaterType, row)
   );
 }
 
@@ -146,8 +146,7 @@ function getOptionPrice(questionRows, questionId, option) {
 
 function defaultAssemblyCode(questionRows, questionId, option) {
   if (questionId === "is2_modelo") {
-    if ((option ?? "").trim().toLowerCase() === "nenhum") return "_";
-    return option ?? "";
+    return resolveIs2ModelCode(questionRows.is2_modelo ?? [], option);
   }
   return getOptionRow(questionRows, questionId, option)?.code ?? "";
 }
@@ -236,12 +235,17 @@ function needsBDW(questionRows, circuito) {
   return isTruthyFlag(circuitoRow?.bdw_enabled);
 }
 
-function hasSelectedModel(modelOption) {
-  return Boolean(modelOption) && !isNoneSelection(modelOption);
+function hasSelectedModel(questionRows, modelOption) {
+  return (
+    Boolean(modelOption) &&
+    !isTechnicalAbsenceSelection(questionRows.is2_modelo ?? [], modelOption)
+  );
 }
 
 function getMandatoryAddOns(questionRows, modelOption) {
-  return hasSelectedModel(modelOption) ? questionRows[mandatoryAddOnsDef.id] ?? [] : [];
+  return hasSelectedModel(questionRows, modelOption)
+    ? questionRows[mandatoryAddOnsDef.id] ?? []
+    : [];
 }
 
 function csvValue(value) {
@@ -262,7 +266,7 @@ function cartesian(rows) {
 }
 
 function buildCircuitVariants(questionRows) {
-  return questionRows.circuito.filter((row) => !isNoneSelection(row.option)).flatMap((circuitoRow) => {
+  return questionRows.circuito.filter((row) => !isTechnicalAbsenceRow(row)).flatMap((circuitoRow) => {
     if (circuitoRow.option !== openCoolingCircuit) {
       return [{ circuitoRow, openCoolingWaterType: "" }];
     }
@@ -316,7 +320,7 @@ function hasSelectedCode(codes) {
 }
 
 function buildOutputRows(questionRows) {
-  const modelRows = questionRows.is2_modelo.filter((row) => !isNoneSelection(row.option));
+  const modelRows = questionRows.is2_modelo.filter((row) => !isTechnicalAbsenceRow(row));
   const baseCombinations = cartesian([modelRows, buildPumpCombinations(questionRows)]);
   const circuitVariants = buildCircuitVariants(questionRows);
   const outputRows = [];
