@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import releaseVersion from "../release-version.json";
 import logo from "./assets/Logo_iS2-removebg-preview.png";
 import printLogo from "./assets/iS2 Logo Fundo Branco.png";
+import { resolveIs2ModelCode } from "./domain/mdc.js";
 
 const QUESTION_DEFS = [
   {
@@ -219,8 +220,7 @@ function getOptionPrice(questionRows, questionId, option) {
 
 function defaultAssemblyCode(questionRows, questionId, option) {
   if (questionId === "is2_modelo") {
-    if ((option ?? "").trim().toLowerCase() === "nenhum") return "_";
-    return option ?? "";
+    return resolveIs2ModelCode(questionRows.is2_modelo ?? [], option);
   }
   return getOptionRow(questionRows, questionId, option)?.code ?? "";
 }
