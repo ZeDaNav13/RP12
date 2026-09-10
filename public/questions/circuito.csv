@@ -1,6 +1,6 @@
-option,bdw_enabled,description
-Circuito Aberto de Arrefecimento,1,Torre de Arrefecimento / Condensador Evaporativo
-Água Quente Sanitária,0,
-Água Consumo Humano,0,
-Piscinas,0,
-Outros,0,
+option,bdw_enabled,description,circuit_class
+Circuito Aberto de Arrefecimento,1,Torre de Arrefecimento / Condensador Evaporativo,open_cooling
+Água Quente Sanitária,0,,sanitary_hot_water
+Água Consumo Humano,0,,general
+Piscinas,0,,general
+Outros,0,,general
