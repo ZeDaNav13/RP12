@@ -1,0 +1,18 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+
+import { normalizeMdcReference } from "./mdc.js";
+
+test("normalizeMdcReference removes whitespace and collapses repeated underscores", () => {
+  assert.equal(
+    normalizeMdcReference("MDC_iS.CP10___M3 Cl2mA/pH/CD.PT_CF_BDW"),
+    "MDC_iS.CP10_M3Cl2mA/pH/CD.PT_CF_BDW"
+  );
+});
+
+test("normalizeMdcReference leaves an already-normalized MDC unchanged", () => {
+  assert.equal(
+    normalizeMdcReference("MDC_iS.CP10_M3Cl2mA/pH/CD.PT_CF_BDW"),
+    "MDC_iS.CP10_M3Cl2mA/pH/CD.PT_CF_BDW"
+  );
+});

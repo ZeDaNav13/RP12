@@ -5,6 +5,7 @@
   "description": "Static RP12 budget configurator and client release package builder.",
   "type": "module",
   "scripts": {
+    "test": "node --test src/domain/*.test.js test/*.test.js",
     "dev": "vite",
     "build": "vite build",
     "build:client": "vite build --base=/mdc_tool/",
