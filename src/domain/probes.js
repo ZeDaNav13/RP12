@@ -11,3 +11,8 @@ export function requiresPtSuffix(chlorineRow, phRow, conductivityRow) {
     chlorineRow?.code?.endsWith("m0c") === true
   );
 }
+
+export function resolvePortaSondasSuffix(chlorineRow) {
+  if (isTechnicalAbsenceRow(chlorineRow)) return "F";
+  return chlorineRow?.model === "AS3" ? "Q" : "F";
+}

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { requiresPtSuffix } from "./probes.js";
+import { requiresPtSuffix, resolvePortaSondasSuffix } from "./probes.js";
 
 test("chlorine technical m0c codes require the PT suffix", () => {
   assert.equal(
@@ -35,4 +35,32 @@ test("substantive pH or conductivity requires the PT suffix", () => {
 test("technical absences and missing probe rows do not require the PT suffix", () => {
   assert.equal(requiresPtSuffix({ code: "-" }, { code: "_" }, { code: "-" }), false);
   assert.equal(requiresPtSuffix(), false);
+});
+
+test("AS3 chlorine metadata resolves the porta-sondas Q suffix", () => {
+  assert.equal(
+    resolvePortaSondasSuffix({
+      option: "Completely renamed chlorine",
+      code: "Cl5mA",
+      model: "AS3"
+    }),
+    "Q"
+  );
+  assert.equal(
+    resolvePortaSondasSuffix({ option: "Another renamed chlorine", code: "Cl2m0c", model: "AS3" }),
+    "Q"
+  );
+});
+
+test("only substantive AS3 chlorine metadata resolves the porta-sondas Q suffix", () => {
+  assert.equal(
+    resolvePortaSondasSuffix({ option: "AS3 chlorine-looking label", code: "Cl5mA", model: "CS4" }),
+    "F"
+  );
+  assert.equal(resolvePortaSondasSuffix({ code: "Cl5mA", model: "AS2" }), "F");
+  assert.equal(resolvePortaSondasSuffix({ code: "GENERIC_NEW_CODE", model: "" }), "F");
+  assert.equal(resolvePortaSondasSuffix({ code: "-", model: "" }), "F");
+  assert.equal(resolvePortaSondasSuffix({ code: "-", model: "AS3" }), "F");
+  assert.equal(resolvePortaSondasSuffix(), "F");
+  assert.equal(resolvePortaSondasSuffix({ code: "GENERIC", model: "UNKNOWN" }), "F");
 });

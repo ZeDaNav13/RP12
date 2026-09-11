@@ -216,3 +216,27 @@ test("generator PT suffix ignores editable chlorine labels", async (context) => 
   assert.equal(fixtureRows.length, 5940);
   assert.deepEqual(compatibilityTechnicalIdentities(fixtureRows), compatibilityTechnicalIdentities(canonicalRows));
 });
+
+test("generator porta-sondas suffix ignores editable chlorine labels", async (context) => {
+  const fixtureRoot = await createGeneratorFixture();
+  context.after(() => fs.rm(fixtureRoot, { recursive: true, force: true }));
+
+  await renameFixtureOption(
+    fixtureRoot,
+    "sonda_cloro.csv",
+    "Cloro Reiss AS3 mA 0-5/0-1.7 c/RV1",
+    "Chlorine neutral product"
+  );
+
+  await execFileAsync(process.execPath, ["scripts/generate-combinations.mjs"], { cwd: fixtureRoot });
+
+  const canonicalRows = parseCsv(
+    await fs.readFile(path.join(rootDir, "all_reply_combinations_filtered.csv"), "utf8")
+  );
+  const fixtureRows = parseCsv(
+    await fs.readFile(path.join(fixtureRoot, "all_reply_combinations_filtered.csv"), "utf8")
+  );
+
+  assert.equal(fixtureRows.length, 5940);
+  assert.deepEqual(compatibilityTechnicalIdentities(fixtureRows), compatibilityTechnicalIdentities(canonicalRows));
+});

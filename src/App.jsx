@@ -4,7 +4,7 @@ import logo from "./assets/Logo_iS2-removebg-preview.png";
 import printLogo from "./assets/iS2 Logo Fundo Branco.png";
 import { isChlorineRowCompatible, OPEN_COOLING_WATER_TYPES } from "./domain/compatibility.js";
 import { resolveIs2ModelCode } from "./domain/mdc.js";
-import { requiresPtSuffix } from "./domain/probes.js";
+import { requiresPtSuffix, resolvePortaSondasSuffix } from "./domain/probes.js";
 import {
   isTechnicalAbsenceRow,
   isTechnicalAbsenceSelection,
@@ -278,19 +278,11 @@ function resolvePortaSondasBaseLetter(probeCodes) {
   return "";
 }
 
-function resolvePortaSondasCode(probeCodes, cloroSelection) {
+function resolvePortaSondasCode(probeCodes, chlorineRow) {
   const baseLetter = resolvePortaSondasBaseLetter(probeCodes);
   if (!baseLetter) return "";
 
-  const qSuffixCloroOptions = new Set([
-    "Cloro Reiss AS3 mA 0-5/0-1.7 c/RV1",
-    "Cloro Reiss AS3 mA 0-20/0-7 c/RV1",
-    "Cloro Reiss AS3 m0c 0-2/0-0.7 c/RV1",
-    "Cloro Reiss AS3 m0c 0-20/0-7 c/RV1"
-  ]);
-
-  const suffix = qSuffixCloroOptions.has((cloroSelection ?? "").trim()) ? "Q" : "F";
-  return `${baseLetter}${suffix}`;
+  return `${baseLetter}${resolvePortaSondasSuffix(chlorineRow)}`;
 }
 
 function isTruthyFlag(value) {
@@ -394,7 +386,7 @@ function buildAssemblyCode(questionRows, modelOption, pumpSegment, probeCodes, p
     probeOptions.sonda_condutividade
   );
   const sondaSegment = formatSondaSegment(probeCodes, chlorineRow, phRow, conductivityRow);
-  const portaSondasCode = resolvePortaSondasCode(probeCodes, chlorineOption);
+  const portaSondasCode = resolvePortaSondasCode(probeCodes, chlorineRow);
   const bdwSegment = needsBDW(questionRows, circuito) ? "BDW" : "";
 
   return normalizeAssemblyCode(
@@ -634,7 +626,8 @@ export default function App() {
       return (defaultAssemblyCode(questionRows, questionId, option) ?? "-").trim() || "-";
     });
 
-    const portaSondasCode = resolvePortaSondasCode(probeCodes, answers.sonda_cloro);
+    const chlorineRow = getOptionRow(questionRows, "sonda_cloro", answers.sonda_cloro);
+    const portaSondasCode = resolvePortaSondasCode(probeCodes, chlorineRow);
     const portaSondasTotal = getOptionPrice(questionRows, PORTA_SONDAS_DEF.id, portaSondasCode);
     const bdwTotal = needsBDW(questionRows, circuito)
       ? getOptionPrice(questionRows, BDW_DEF.id, "BDW")
@@ -679,7 +672,8 @@ export default function App() {
       return (defaultAssemblyCode(questionRows, questionId, option) ?? "-").trim() || "-";
     });
 
-    const portaSondasCode = resolvePortaSondasCode(probeCodes, answers.sonda_cloro);
+    const chlorineRow = getOptionRow(questionRows, "sonda_cloro", answers.sonda_cloro);
+    const portaSondasCode = resolvePortaSondasCode(probeCodes, chlorineRow);
     if (portaSondasCode) {
       rows.push(
         buildDetailRow(

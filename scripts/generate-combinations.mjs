@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 import { isChlorineRowCompatible, OPEN_COOLING_WATER_TYPES } from "../src/domain/compatibility.js";
 import { isTechnicalAbsenceRow, isTechnicalAbsenceSelection } from "../src/domain/options.js";
 import { resolveIs2ModelCode } from "../src/domain/mdc.js";
-import { requiresPtSuffix } from "../src/domain/probes.js";
+import { requiresPtSuffix, resolvePortaSondasSuffix } from "../src/domain/probes.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(__dirname, "..");
@@ -194,19 +194,11 @@ function resolvePortaSondasBaseLetter(probeCodes) {
   return "";
 }
 
-function resolvePortaSondasCode(probeCodes, cloroSelection) {
+function resolvePortaSondasCode(probeCodes, chlorineRow) {
   const baseLetter = resolvePortaSondasBaseLetter(probeCodes);
   if (!baseLetter) return "";
 
-  const qSuffixCloroOptions = new Set([
-    "Cloro Reiss AS3 mA 0-5/0-1.7 c/RV1",
-    "Cloro Reiss AS3 mA 0-20/0-7 c/RV1",
-    "Cloro Reiss AS3 m0c 0-2/0-0.7 c/RV1",
-    "Cloro Reiss AS3 m0c 0-20/0-7 c/RV1"
-  ]);
-
-  const suffix = qSuffixCloroOptions.has((cloroSelection ?? "").trim()) ? "Q" : "F";
-  return `${baseLetter}${suffix}`;
+  return `${baseLetter}${resolvePortaSondasSuffix(chlorineRow)}`;
 }
 
 function isTruthyFlag(value) {
@@ -340,7 +332,7 @@ function buildOutputRows(questionRows) {
           sondaPh,
           sondaCondutividade
         );
-        const portaSondasCode = resolvePortaSondasCode(probeCodes, sondaCloro.option);
+        const portaSondasCode = resolvePortaSondasCode(probeCodes, sondaCloro);
         const portaSondasPrice = getOptionPrice(questionRows, portaSondasDef.id, portaSondasCode);
         const bdwEnabled = needsBDW(questionRows, circuito);
         const bdwPrice = bdwEnabled ? getOptionPrice(questionRows, bdwDef.id, "BDW") : 0;
