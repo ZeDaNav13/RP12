@@ -116,6 +116,10 @@ async function createGeneratorFixture() {
     path.join(rootDir, "src", "domain", "compatibility.js"),
     path.join(fixtureRoot, "src", "domain", "compatibility.js")
   );
+  await fs.copyFile(
+    path.join(rootDir, "src", "domain", "probes.js"),
+    path.join(fixtureRoot, "src", "domain", "probes.js")
+  );
   await fs.cp(path.join(rootDir, "public", "questions"), path.join(fixtureRoot, "public", "questions"), {
     recursive: true
   });
@@ -184,6 +188,30 @@ test("generator compatibility ignores editable circuit and chlorine labels", asy
 
   const canonicalRows = parseCsv(await fs.readFile(path.join(rootDir, "all_reply_combinations_filtered.csv"), "utf8"));
   const fixtureRows = parseCsv(await fs.readFile(path.join(fixtureRoot, "all_reply_combinations_filtered.csv"), "utf8"));
+
+  assert.equal(fixtureRows.length, 5940);
+  assert.deepEqual(compatibilityTechnicalIdentities(fixtureRows), compatibilityTechnicalIdentities(canonicalRows));
+});
+
+test("generator PT suffix ignores editable chlorine labels", async (context) => {
+  const fixtureRoot = await createGeneratorFixture();
+  context.after(() => fs.rm(fixtureRoot, { recursive: true, force: true }));
+
+  await renameFixtureOption(
+    fixtureRoot,
+    "sonda_cloro.csv",
+    "Cloro 0-2 Reiss CS4 m0c",
+    "Chlorine neutral label"
+  );
+
+  await execFileAsync(process.execPath, ["scripts/generate-combinations.mjs"], { cwd: fixtureRoot });
+
+  const canonicalRows = parseCsv(
+    await fs.readFile(path.join(rootDir, "all_reply_combinations_filtered.csv"), "utf8")
+  );
+  const fixtureRows = parseCsv(
+    await fs.readFile(path.join(fixtureRoot, "all_reply_combinations_filtered.csv"), "utf8")
+  );
 
   assert.equal(fixtureRows.length, 5940);
   assert.deepEqual(compatibilityTechnicalIdentities(fixtureRows), compatibilityTechnicalIdentities(canonicalRows));

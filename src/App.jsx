@@ -4,6 +4,7 @@ import logo from "./assets/Logo_iS2-removebg-preview.png";
 import printLogo from "./assets/iS2 Logo Fundo Branco.png";
 import { isChlorineRowCompatible, OPEN_COOLING_WATER_TYPES } from "./domain/compatibility.js";
 import { resolveIs2ModelCode } from "./domain/mdc.js";
+import { requiresPtSuffix } from "./domain/probes.js";
 import {
   isTechnicalAbsenceRow,
   isTechnicalAbsenceSelection,
@@ -250,23 +251,12 @@ function formatPumpCounts(pumpCodes) {
   return orderedCounts.map((item) => `${item.count}${item.code}`).join("+");
 }
 
-function formatSondaSegment(probeCodes, cloroSelection) {
+function formatSondaSegment(probeCodes, chlorineRow, phRow, conductivityRow) {
   const selectedCodes = probeCodes.filter((code) => code !== "-");
   const selectedCount = selectedCodes.length;
   if (selectedCount === 0) return "";
 
-  const ptCloroOptions = new Set([
-    "Cloro 0-2 Reiss CS4 m0c",
-    "Cloro 0-20 Reiss CS4 m0c",
-    "Cloro Reiss AS3 m0c 0-2/0-0.7 c/RV1",
-    "Cloro Reiss AS3 m0c 0-20/0-7 c/RV1",
-    "Cloro Reiss AS2 m0c 0-2/0-0.7 c/RV1",
-    "Cloro Reiss AS2 m0c 0-20/0-7 c/RV1"
-  ]);
-
-  const hasPhOrCond = probeCodes[1] !== "-" || probeCodes[2] !== "-";
-  const hasPtCloro = ptCloroOptions.has((cloroSelection ?? "").trim());
-  const ptSuffix = hasPhOrCond || hasPtCloro ? ".PT" : "";
+  const ptSuffix = requiresPtSuffix(chlorineRow, phRow, conductivityRow) ? ".PT" : "";
   return `M${selectedCount} ${selectedCodes.join("/")}${ptSuffix}`;
 }
 
@@ -394,9 +384,17 @@ function normalizeAssemblyCode(value) {
   return value.replace(/\s+/g, "").replace(/_+/g, "_");
 }
 
-function buildAssemblyCode(questionRows, modelOption, pumpSegment, probeCodes, cloroOption, circuito) {
-  const sondaSegment = formatSondaSegment(probeCodes, cloroOption);
-  const portaSondasCode = resolvePortaSondasCode(probeCodes, cloroOption);
+function buildAssemblyCode(questionRows, modelOption, pumpSegment, probeCodes, probeOptions, circuito) {
+  const chlorineOption = probeOptions.sonda_cloro;
+  const chlorineRow = getOptionRow(questionRows, "sonda_cloro", chlorineOption);
+  const phRow = getOptionRow(questionRows, "sonda_ph", probeOptions.sonda_ph);
+  const conductivityRow = getOptionRow(
+    questionRows,
+    "sonda_condutividade",
+    probeOptions.sonda_condutividade
+  );
+  const sondaSegment = formatSondaSegment(probeCodes, chlorineRow, phRow, conductivityRow);
+  const portaSondasCode = resolvePortaSondasCode(probeCodes, chlorineOption);
   const bdwSegment = needsBDW(questionRows, circuito) ? "BDW" : "";
 
   return normalizeAssemblyCode(
@@ -747,11 +745,11 @@ export default function App() {
         answers.is2_modelo ?? "",
         currentPumpSegment,
         probeCodes,
-        answers.sonda_cloro,
+        answers,
         circuito
       );
     },
-    [answers.is2_modelo, answers.sonda_cloro, circuito, currentPumpSegment, probeCodes, questionRows]
+    [answers, circuito, currentPumpSegment, probeCodes, questionRows]
   );
 
   const uniqueAssemblyCodes = useMemo(
