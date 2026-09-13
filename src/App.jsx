@@ -432,7 +432,11 @@ function buildUniqueAssemblyCodes(questionRows) {
             modelRow.option,
             pumpCombination.pumpSegment,
             probeCodes,
-            sondaCloro.option,
+            {
+              sonda_cloro: sondaCloro.option,
+              sonda_ph: sondaPh.option,
+              sonda_condutividade: sondaCondutividade.option
+            },
             circuito
           );
           if (seen.has(assemblyCode)) continue;
