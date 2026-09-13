@@ -113,6 +113,10 @@ async function createGeneratorFixture() {
     path.join(fixtureRoot, "src", "domain", "mdc.js")
   );
   await fs.copyFile(
+    path.join(rootDir, "src", "domain", "pumps.js"),
+    path.join(fixtureRoot, "src", "domain", "pumps.js")
+  );
+  await fs.copyFile(
     path.join(rootDir, "src", "domain", "compatibility.js"),
     path.join(fixtureRoot, "src", "domain", "compatibility.js")
   );

@@ -4,6 +4,7 @@ import logo from "./assets/Logo_iS2-removebg-preview.png";
 import printLogo from "./assets/iS2 Logo Fundo Branco.png";
 import { isChlorineRowCompatible, OPEN_COOLING_WATER_TYPES } from "./domain/compatibility.js";
 import { resolveIs2ModelCode } from "./domain/mdc.js";
+import { buildPumpSegment } from "./domain/pumps.js";
 import { requiresPtSuffix, resolvePortaSondasSuffix } from "./domain/probes.js";
 import {
   isTechnicalAbsenceRow,
@@ -229,28 +230,6 @@ function defaultAssemblyCode(questionRows, questionId, option) {
   return getOptionRow(questionRows, questionId, option)?.code ?? "";
 }
 
-function formatPumpCounts(pumpCodes) {
-  const orderedCounts = [];
-  pumpCodes.forEach((code) => {
-    const existing = orderedCounts.find((item) => item.code === code);
-    if (existing) {
-      existing.count += 1;
-    } else {
-      orderedCounts.push({ code, count: 1 });
-    }
-  });
-
-  const priority = { BDP: 0, BDC: 1 };
-  orderedCounts.sort((a, b) => {
-    const pa = priority[a.code] ?? 99;
-    const pb = priority[b.code] ?? 99;
-    if (pa !== pb) return pa - pb;
-    return a.code.localeCompare(b.code);
-  });
-
-  return orderedCounts.map((item) => `${item.count}${item.code}`).join("+");
-}
-
 function formatSondaSegment(probeCodes, chlorineRow, phRow, conductivityRow) {
   const selectedCodes = probeCodes.filter((code) => code !== "-");
   const selectedCount = selectedCodes.length;
@@ -353,19 +332,21 @@ function buildPumpCombinations(questionRows) {
   const pumpRows = questionRows.bomba_biocida_inorganico ?? [];
   const proportionalPump = pumpRows.find((row) => row.code === "BDP");
   const constantPump = pumpRows.find((row) => row.code === "BDC");
+  const noPump = pumpRows.find((row) => row.code === "-");
   if (!proportionalPump || !constantPump) return [];
 
   const combinations = [];
   for (let proportionalCount = 0; proportionalCount <= 4; proportionalCount += 1) {
     for (let constantCount = 0; constantCount <= 4 - proportionalCount; constantCount += 1) {
-      const pumpCodes = [
-        ...Array(proportionalCount).fill(proportionalPump.code),
-        ...Array(constantCount).fill(constantPump.code)
+      const selectedPumpRows = [
+        ...Array(proportionalCount).fill(proportionalPump),
+        ...Array(constantCount).fill(constantPump),
+        ...Array(4 - proportionalCount - constantCount).fill(noPump)
       ];
       combinations.push({
         proportionalCount,
         constantCount,
-        pumpSegment: pumpCodes.length > 0 ? `D${formatPumpCounts(pumpCodes)}` : "_"
+        pumpSegment: buildPumpSegment(selectedPumpRows)
       });
     }
   }
@@ -643,8 +624,11 @@ export default function App() {
     return baseTotal + portaSondasTotal + bdwTotal + mandatoryAddOnsTotal;
   }, [answers, circuito, questionRows]);
 
-  const pumpCodes = useMemo(
-    () => getSelectedCodes(questionRows, pumpQuestionIds, answers),
+  const pumpRows = useMemo(
+    () =>
+      pumpQuestionIds.map((questionId) =>
+        getOptionRow(questionRows, questionId, answers[questionId] ?? "")
+      ),
     [answers, questionRows]
   );
 
@@ -656,10 +640,7 @@ export default function App() {
   const hasProbes = hasSelectedCode(probeCodes);
   const canGeneratePrice = hasProbes;
   const priceText = canGeneratePrice && showPrice ? money(total) : "---";
-  const currentPumpSegment =
-    pumpCodes.filter((code) => code !== "-").length > 0
-      ? `D${formatPumpCounts(pumpCodes.filter((code) => code !== "-"))}`
-      : "_";
+  const currentPumpSegment = buildPumpSegment(pumpRows);
 
   const detailedRows = useMemo(() => {
     const baseRows = QUESTION_DEFS.map((q) => {

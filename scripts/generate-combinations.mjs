@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import { isChlorineRowCompatible, OPEN_COOLING_WATER_TYPES } from "../src/domain/compatibility.js";
 import { isTechnicalAbsenceRow, isTechnicalAbsenceSelection } from "../src/domain/options.js";
 import { resolveIs2ModelCode } from "../src/domain/mdc.js";
+import { buildPumpSegment } from "../src/domain/pumps.js";
 import { requiresPtSuffix, resolvePortaSondasSuffix } from "../src/domain/probes.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -145,28 +146,6 @@ function defaultAssemblyCode(questionRows, questionId, option) {
   return getOptionRow(questionRows, questionId, option)?.code ?? "";
 }
 
-function formatPumpCounts(pumpCodes) {
-  const orderedCounts = [];
-  pumpCodes.forEach((code) => {
-    const existing = orderedCounts.find((item) => item.code === code);
-    if (existing) {
-      existing.count += 1;
-    } else {
-      orderedCounts.push({ code, count: 1 });
-    }
-  });
-
-  const priority = { BDP: 0, BDC: 1 };
-  orderedCounts.sort((a, b) => {
-    const pa = priority[a.code] ?? 99;
-    const pb = priority[b.code] ?? 99;
-    if (pa !== pb) return pa - pb;
-    return a.code.localeCompare(b.code);
-  });
-
-  return orderedCounts.map((item) => `${item.count}${item.code}`).join("+");
-}
-
 function formatSondaSegment(probeCodes, chlorineRow, phRow, conductivityRow) {
   const selectedCodes = probeCodes.filter((code) => code !== "-");
   const selectedCount = selectedCodes.length;
@@ -265,13 +244,14 @@ function buildPumpCombinations(questionRows) {
   for (let proportionalCount = 0; proportionalCount <= 4; proportionalCount += 1) {
     for (let constantCount = 0; constantCount <= 4 - proportionalCount; constantCount += 1) {
       const noPumpCount = 4 - proportionalCount - constantCount;
-      const pumpCodes = [
-        ...Array(proportionalCount).fill(proportionalPump.code),
-        ...Array(constantCount).fill(constantPump.code)
+      const selectedPumpRows = [
+        ...Array(proportionalCount).fill(proportionalPump),
+        ...Array(constantCount).fill(constantPump),
+        ...Array(noPumpCount).fill(noPump)
       ];
       const totalPrice =
         proportionalCount * proportionalPump.price + constantCount * constantPump.price;
-      const pumpSegment = pumpCodes.length > 0 ? `D${formatPumpCounts(pumpCodes)}` : "_";
+      const pumpSegment = buildPumpSegment(selectedPumpRows);
 
       combinations.push({
         proportionalCount,
