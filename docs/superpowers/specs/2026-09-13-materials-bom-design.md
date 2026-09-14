@@ -52,15 +52,15 @@ Rules:
 
 - One row represents one material.
 - `material_phc` and `description` are the material identity columns. `material_phc` is the material aggregation identity when nonblank; `description` is display data and is never technical identity.
-- When `material_phc` is blank, the source matrix-row identity is the temporary internal aggregation identity. Contributions from that same blank-PHC row aggregate together, while distinct blank-PHC rows remain distinct and must never merge merely because their PHC values are blank.
-- Every subsequent column represents a technical MDC component and is dynamically discovered.
+- Matrix headers are case-sensitive technical identifiers. The required structural headers must be exactly `material_phc`, `description`, and `ALWAYS`; exact duplicate headers are invalid; `AF` and `af` are distinct component identifiers; and matrix parsing must not case-normalize, trim into equivalence, or otherwise alias technical header identity.
+- A nonblank `material_phc` may appear on only one matrix row; duplicate nonblank PHCs are invalid matrix data. When `material_phc` is blank, multiple rows are allowed and each source matrix-row identity is the temporary internal aggregation identity. Contributions from that same blank-PHC row aggregate together, while distinct blank-PHC rows remain distinct and must never merge merely because their PHC values are blank.
+- Every subsequent column represents a technical MDC component and is dynamically discovered using its exact case-sensitive header.
 - Adding a column for a technical component already understood by the MDC parser is data-only; genuinely new MDC grammar requires protected code changes.
 - Each cell is the quantity required for one occurrence of that component. Repeated MDC components multiply that value.
-- Fractional quantities are valid, including `0.5` and `0.4`.
-- `ALWAYS` applies exactly once per complete MDC assembly.
+- Quantities must be finite numbers greater than or equal to zero. Positive integers and fractional quantities including `0.5`, `0.4`, and `1.2` are valid; negative, non-numeric, and non-finite values are invalid matrix data and must never silently become zero.
+- `ALWAYS` is a mandatory exact header and applies exactly once per complete MDC assembly, independent of the number of parsed technical components.
 - A blank or `0` means no contribution only when that component column explicitly exists.
 - A missing component column is unmapped and makes the BOM incomplete; the calculator must never synthesize a missing zero column.
-- Invalid or non-numeric quantities are invalid matrix data and must never silently become zero.
 - Mappings use technical codes recoverable from MDC, never editable display labels.
 
 ## Initial client material relationships
