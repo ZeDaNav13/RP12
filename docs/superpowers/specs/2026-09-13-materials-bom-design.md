@@ -51,7 +51,8 @@ material_phc | description | ALWAYS | CP10 | ... | BDP | BDC | AF | AQ | ... | B
 Rules:
 
 - One row represents one material.
-- `material_phc` and `description` are the material identity columns.
+- `material_phc` and `description` are the material identity columns. `material_phc` is the material aggregation identity when nonblank; `description` is display data and is never technical identity.
+- When `material_phc` is blank, the source matrix-row identity is the temporary internal aggregation identity. Contributions from that same blank-PHC row aggregate together, while distinct blank-PHC rows remain distinct and must never merge merely because their PHC values are blank.
 - Every subsequent column represents a technical MDC component and is dynamically discovered.
 - Adding a column for a technical component already understood by the MDC parser is data-only; genuinely new MDC grammar requires protected code changes.
 - Each cell is the quantity required for one occurrence of that component. Repeated MDC components multiply that value.
@@ -106,7 +107,7 @@ A BOM result logically contains:
 - PHC: resolved reference when available and found/not-found status;
 - parsed components: technical code and occurrence count;
 - contributions: source component, material PHC where available, description, and contributed quantity;
-- material totals: material PHC where available, description, and final aggregated quantity;
+- material totals: material PHC where available, description, final aggregated quantity, and the internal matrix-row identity when material PHC is blank;
 - issues: warnings, unmapped components, missing material PHCs, and other validated problems;
 - BOM status: Complete or Incomplete;
 - export eligibility: whether PDF and Excel are allowed.
@@ -160,7 +161,7 @@ Both views consume one calculated result:
 1. **Components / Materials** is a provenance view: component → material PHC → description → contributed quantity.
 2. **Materials Total** is the consolidated production view: material PHC → description → final total quantity.
 
-Calculation uses the current runtime matrix and does not create history. Changing input after a successful calculation visibly marks the displayed result stale and requires recalculation before export. Version 1 has no matrix editor UI; the client edits the runtime matrix separately.
+Calculation uses the current runtime matrix and does not create history. After a successful calculation, the UI looks up and surfaces existing local export history for that normalized MDC, including available format(s) and date/time(s); this visibility is not an export action and creates no history. Changing input after a successful calculation visibly marks the displayed result stale and requires recalculation before export. Version 1 has no matrix editor UI; the client edits the runtime matrix separately.
 
 ## Export contract
 
@@ -174,7 +175,7 @@ Excel is intended for PHC import. The exact file type, columns, and order remain
 
 History is browser/workstation-local only. It is created only after successful PDF or Excel export; calculation/preview creates no entry. There is no shared backend, material-file fingerprinting, automatic BOM version comparison, or workstation synchronization.
 
-Each history entry contains normalized MDC, PHC when available, date/time, and export format. PDF and Excel are separate events. Before export, history is checked by normalized MDC plus format. If the same format was exported before, show when it occurred and require explicit confirmation. Confirmed re-export appends another event. Failed or cancelled exports create none.
+Each history entry contains normalized MDC, PHC when available, date/time, and export format. PDF and Excel are separate events. After a successful calculation, existing events for the normalized MDC are visible in the UI without writing history. At export time, history is checked independently by normalized MDC plus format. If a PDF export has a previous PDF event, or an Excel export has a previous Excel event, show when it occurred and require explicit confirmation for that same-format re-export only. Confirmed re-export appends another event. Failed or cancelled exports create none.
 
 ## Testing strategy
 
