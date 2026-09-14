@@ -34,21 +34,24 @@ Representative current generated references are:
 
 ```text
 MDC_iS.CP10_M3Cl2mA/pH/CD.PT_CF_BDW
+MDC_iS.CP10_D1BDP_M3Cl2mA/pH/CD.PT_CF_BDW
 MDC_iS.CP10_D2BDP+1BDC_M3Cl2mA/pH/CD.PT_CF_BDW
+MDC_iS.CP10_D1BDC_M3Cl2mA/pH/CD.PT_CF_BDW
+MDC_iS.CP10_D2BDC_M3Cl2mA/pH/CD.PT_CF_BDW
 MDC_iS.CP10_M1Cl2mA_AF_BDW
 MDC_iS.CP10_M2Cl2mA/pH.PT_BF_BDW
 MDC_iS.CP10_M3Cl5mA/pH/CD.PT_CQ
 ```
 
-- The model segment is `CP10` through `CP60`; its technical absence is `_` before normalization and therefore produces no model component.
-- The optional pump segment is `D<count>BDP` with optional `+<count>BDC`; no-pump is `_` before normalization and produces no pump components. The counts are positive decimal integers and become repeated `BDP`/`BDC` component counts.
+- The model segment is one of the current canonical technical codes `CP10`, `CP20`, `CP30`, `CP40`, `CP50`, or `CP60`; its technical absence is `_` before normalization and therefore produces no model component. A different `CP` value is malformed, not a future-model shortcut.
+- The optional pump segment emitted by `buildPumpSegment()` in `src/domain/pumps.js` is `D<count><pump-code>(+<count><pump-code>)*`; no-pump is `_` before normalization and produces no pump components. Current selector rows produce `BDP` and `BDC`, ordered as BDP then BDC when both exist, so valid generated examples include `D1BDP`, `D2BDP+1BDC`, `D1BDC`, and `D2BDC`. The protected helper also emits any other nonempty technical `row.code` supplied to it, so the parser accepts a nonempty technical pump token in this same segment shape as a component rather than misclassifying it as malformed; it does not accept arbitrary extra segment types.
 - The optional probe segment is `M<count><probe-code>(/<probe-code>)*`, where current probe codes are chlorine codes (`Cl2mA`, `Cl5mA`, `Cl10mA`, `Cl20mA`, `Cl2m0c`, `Cl20m0c`), `pH`, and `CD`. Its leading count must equal the number of slash-separated probe codes.
 - `.PT` is an optional probe-segment modifier, not a BOM component. It may only follow a valid probe segment.
 - The optional porta-sondas segment is a two-letter technical suffix (`AF`, `AQ`, `BF`, `BQ`, `CF`, `CQ`, `DF`, or `FF`); it is itself a BOM component. Current grammar places it after a probe segment.
 - `BDW` is an optional final BOM component. Circuit and water metadata are not encoded as independent BOM components.
 - `_` separators delimit nonempty segments after normalization. No display text is part of the grammar.
 
-The parser must return a structured malformed failure for bad prefix, missing model, invalid pump count/form, invalid probe count/form, invalid `.PT` placement, invalid segment order, or duplicate structural segment. A segment-shaped unknown technical code is syntactically valid and reaches the matrix as an unmapped component. A syntactically valid normalized MDC that has no row in `phc_integration.csv` is a PHC warning, not a parse failure.
+The parser must return a structured malformed failure for bad prefix, missing model, a model outside the canonical set, invalid pump count/form, invalid probe count/form, invalid `.PT` placement, invalid segment order, or duplicate structural segment. A helper-shaped unknown nonempty pump code is syntactically valid and reaches the matrix as an unmapped component. A syntactically valid normalized MDC that has no row in `phc_integration.csv` is a PHC warning, not a parse failure.
 
 ## Planned File Structure
 
@@ -97,17 +100,33 @@ The parser must return a structured malformed failure for bad prefix, missing mo
       hasPtSuffix: true
     }
   });
-  assert.equal(parseBomMdc("MDC_iS.CP10_M2Cl2mA/pH.PT_BF_BDW").value.components[3].code, "Cl2mA");
-  assert.deepEqual(parseBomMdc("MDC_iS.CP99_M1Xx_AF").value.components, [
-    { code: "CP99", count: 1 }, { code: "Xx", count: 1 }, { code: "AF", count: 1 }
+  assert.deepEqual(parseBomMdc("MDC_iS.CP10_M2Cl2mA/pH.PT_BF_BDW").value.components, [
+    { code: "CP10", count: 1 }, { code: "Cl2mA", count: 1 },
+    { code: "pH", count: 1 }, { code: "BF", count: 1 }, { code: "BDW", count: 1 }
   ]);
+  assert.deepEqual(parseBomMdc("MDC_iS.CP10_D1BDP_M1Cl2mA_AF").value.components.slice(0, 2), [
+    { code: "CP10", count: 1 }, { code: "BDP", count: 1 }
+  ]);
+  assert.deepEqual(parseBomMdc("MDC_iS.CP10_D2BDP+1BDC_M1Cl2mA_AF").value.components.slice(0, 3), [
+    { code: "CP10", count: 1 }, { code: "BDP", count: 2 }, { code: "BDC", count: 1 }
+  ]);
+  assert.deepEqual(parseBomMdc("MDC_iS.CP10_D1BDC_M1Cl2mA_AF").value.components.slice(0, 2), [
+    { code: "CP10", count: 1 }, { code: "BDC", count: 1 }
+  ]);
+  assert.deepEqual(parseBomMdc("MDC_iS.CP10_D2BDC_M1Cl2mA_AF").value.components.slice(0, 2), [
+    { code: "CP10", count: 1 }, { code: "BDC", count: 2 }
+  ]);
+  assert.deepEqual(parseBomMdc("MDC_iS.CP10_D1BDX_M1Cl2mA_AF").value.components.slice(0, 2), [
+    { code: "CP10", count: 1 }, { code: "BDX", count: 1 }
+  ]);
+  assert.equal(parseBomMdc("MDC_iS.CP99_M1Cl2mA_AF").error.kind, "malformed_mdc");
   assert.deepEqual(parseBomMdc("MDC_iS.CP10_M3Cl2mA/pH.PT.PT_CF").error, {
     kind: "malformed_mdc", segment: "M3Cl2mA/pH.PT.PT", message: "invalid probe segment"
   });
   ```
 
 - [ ] **Step 2: Run RED** with `node --test src/domain/bom-mdc.test.js`; expect module-not-found or `parseBomMdc is not a function` because no BOM parser exists.
-- [ ] **Step 3: Write the minimum parser** in `src/domain/bom-mdc.js`: reject non-string/empty input before normalization; normalize once; parse only the documented segment sequence; preserve encounter order while aggregating repeated same-code occurrences; return the first malformed structural segment in `error.segment`; accept unknown code text only in a structurally valid model/probe/porta position.
+- [ ] **Step 3: Write the minimum parser** in `src/domain/bom-mdc.js`: reject non-string/empty input before normalization; normalize once; accept only the six canonical model codes; parse only the documented segment sequence; accept BDP-only, BDC-only, and mixed pump counts plus helper-shaped nonempty technical pump codes; preserve encounter order while aggregating repeated same-code occurrences; and return the first malformed structural segment in `error.segment`.
 - [ ] **Step 4: Run GREEN** with `node --test src/domain/bom-mdc.test.js`; expect all parser tests to pass.
 - [ ] **Step 5: Run relevant regression** with `npm test && npm run build && git diff --check`; also run `node --test test/phc-identity.test.js` to prove historical whitespace/underscore normalization remains protected.
 - [ ] **Step 6: Inspect scope** with `git diff -- src/domain/bom-mdc.js src/domain/bom-mdc.test.js` and `git status --short`; confirm no existing parser, selector, generated CSV, or PHC registry changes.
@@ -219,7 +238,7 @@ The parser must return a structured malformed failure for bad prefix, missing mo
 - Consumes: a non-blocked result from `calculateBom` and `jspdf` as `jsPDF`.
 - Produces: `createBomExportModel(result) -> { normalizedMdc, phcReference: string | null, state: "complete" | "incomplete", issues: Array<object>, rows: Array<{ materialPhc: string, description: string, quantity: number }> }`; `assertBomPdfEligible(result)`; `assertBomExcelEligible(result)`; and `saveBomPdf({ model, createPdf, filename }) -> Promise<void>`. `saveBomPdf` writes only `model.rows`, never contributions.
 
-- [ ] **Step 1: Write RED tests** that pass an already-calculated complete result and an incomplete result to `createBomExportModel`; assert exports contain totals but no `sourceComponent`, show normalized MDC/PHC/state/issues, allow PDF for incomplete, and reject blocked result. Test `saveBomPdf` with a fake `createPdf` recording text/table/save calls; assert its filename is derived from normalized MDC and it receives the same totals rows. Test no history write here because history stays in the UI orchestration boundary.
+- [ ] **Step 1: Write RED tests** that pass already-calculated complete and incomplete results to `createBomExportModel`; assert exports contain totals but no `sourceComponent`, show normalized MDC/PHC/state/issues, allow PDF for incomplete, and reject blocked result. Test `assertBomExcelEligible` schema-neutrally: allow a complete result with PHCs on every included material; allow a result incomplete only because an unmapped technical component while every included material has a PHC; reject any included blank `materialPhc`; and reject a blocked result. Test `saveBomPdf` with a fake `createPdf` recording text/table/save calls; assert its filename is derived from normalized MDC and it receives the same totals rows. Test no history write here because history stays in the UI orchestration boundary.
 - [ ] **Step 2: Run RED** with `node --test src/domain/bom-export.test.js src/bomPdf.test.js`; expect missing export modules.
 - [ ] **Step 3: Add the justified PDF dependency and minimum adapters.** Run `npm install jspdf`; use it only in `src/bomPdf.js` to create a browser-downloadable consolidated BOM PDF. `src/domain/bom-export.js` remains dependency-free and performs no calculation. The adapter resolves only after `pdf.save(filename)` completes; callers may then record the export event. Do not select `xlsx`, `exceljs`, or another Excel package because the client has not supplied the PHC import schema.
 - [ ] **Step 4: Run GREEN** with `node --test src/domain/bom-export.test.js src/bomPdf.test.js` and `npm test`.
@@ -235,18 +254,19 @@ The parser must return a structured malformed failure for bad prefix, missing mo
 - Test: none until the client provides an approved schema artifact
 
 **Interfaces:**
-- Consumes: `createBomExportModel(result)` and `assertBomExcelEligible(result)` from Task 7; these are complete and testable before this gate.
-- Produces after the gate: a named Excel serializer and tests whose exact file type, column names, column order, required values, and formatting rules match the client-supplied PHC schema.
+- Consumes: `createBomExportModel(result)` and `assertBomExcelEligible(result)` from Task 7, plus the Task 9 `MaterialsTool` history orchestration (`requiresConfirmation`, `recordSuccessfulExport`, displayed history refresh, stale state). These contracts are complete and testable before this gate.
+- Produces after the gate: a generically named schema-specific serializer and browser export adapter, tests whose exact file type, column names, column order, required values, and formatting rules match the client-supplied PHC schema, and the Task 9 Excel control wired to that adapter.
 
 - [ ] **Step 1: Obtain and record the client’s PHC import contract** containing file type, exact header names, header order, required/optional columns, quantity representation, and formatting/import constraints. Reject verbal assumptions and do not write serializer code before this evidence exists.
-- [ ] **Step 2: Write RED tests from the supplied contract** using `createBomExportModel(result)` as input. Assert every output header and its order, each row mapping, material-PHC requirement, quantity encoding, filename convention if specified, and rejection when `assertBomExcelEligible(result)` fails.
+- [ ] **Step 2: Write RED tests from the supplied contract** using `createBomExportModel(result)` as input. Assert every output header and its order, each row mapping, material-PHC requirement, quantity encoding, filename convention if specified, and rejection when `assertBomExcelEligible(result)` fails. Add Task 9 orchestration tests proving stale or blocked results cannot invoke the adapter, a previous normalized-MDC `"excel"` event requires confirmation immediately before export, cancelled/failed export creates no history, and a successful export appends `recordSuccessfulExport({ normalizedMdc, phcReference, format: "excel" })` then refreshes displayed Excel history.
 - [ ] **Step 3: Run RED** using the exact Node test command for the new serializer test; expect a missing serializer export or an assertion mismatch against the absent implementation.
 - [ ] **Step 4: Select an Excel dependency only if the approved file type cannot be produced with already-installed browser capabilities.** Record the dependency choice and its browser/static-package justification in the task’s implementation review; keep it isolated to the Excel adapter and do not alter calculation logic.
-- [ ] **Step 5: Write the minimum serializer** that maps only the Task 7 export model into the approved schema, rejects ineligible results before creating a file, and resolves only after the browser export call succeeds.
-- [ ] **Step 6: Run GREEN and regression** with the exact serializer test, `npm test`, `npm run build`, and `git diff --check`; verify PDF behavior and the existing selector remain unchanged.
-- [ ] **Step 7: Inspect and commit the approved scope** using only files required by the client schema, with a message of the form `feat: export PHC-ready BOM Excel`; do not alter matrix mappings or BOM quantities in this task.
+- [ ] **Step 5: Write the minimum generic serializer and browser adapter** that map only the Task 7 export model into the approved schema, reject ineligible results before creating a file, and resolve only after the browser export call succeeds. Name the adapter from the supplied format at implementation time rather than assuming XLSX.
+- [ ] **Step 6: Wire the Task 9 Excel control** to check confirmation immediately before invoking the adapter, append its Excel history event only after adapter success, refresh history after success, and leave history untouched when confirmation is declined or the adapter rejects.
+- [ ] **Step 7: Run GREEN and regression** with the exact serializer and orchestration tests, `npm test`, `npm run build`, and `git diff --check`; verify PDF behavior and the existing selector remain unchanged.
+- [ ] **Step 8: Inspect and commit the approved scope** using only files required by the client schema and the Task 9 Excel wiring, with a message of the form `feat: export PHC-ready BOM file`; do not alter matrix mappings or BOM quantities in this task.
 
-Tasks 1–7 and 9–10 can proceed without the Excel schema because Excel eligibility and the schema-neutral totals model already exist. Task 8 is the sole client-input execution gate.
+Tasks 1–7 and 9 can proceed without the Excel schema because Excel eligibility and the schema-neutral totals model already exist. Task 8 is the sole client-input execution gate and may execute after Task 9 when the client supplies the schema.
 
 ## Task 9: Present the separate Materials workspace and wire runtime data
 
@@ -276,11 +296,11 @@ Tasks 1–7 and 9–10 can proceed without the Excel schema because Excel eligib
 
 **Interfaces:**
 - Consumes: the complete Tasks 1–7 and 9 implementation; consumes Task 8 only when the client Excel schema has been supplied and its serializer committed.
-- Produces: verified static client package instructions; no new domain interface.
+- Produces: a pre-schema static-package verification checkpoint or, after Task 8, verified final client package instructions; no new domain interface.
 
 - [ ] **Step 1: Write RED acceptance checks as a release checklist** in the existing README files only if no equivalent client-facing checklist exists. The checklist must require manual MDC calculation, malformed-input block, PHC-not-found warning, unmapped/incomplete PDF state, missing-material-PHC Excel block, local-history visibility, same-format confirmation, and selector smoke test.
-- [ ] **Step 2: Run the acceptance check before documentation changes** with `npm test`, `npm run build`, and `npm run build:client`; expect failure only if a required implemented behavior is absent, then stop to repair it in its owning task rather than adding workaround code here.
-- [ ] **Step 3: Make minimum documentation/release changes.** Explain `public/materials/materials_matrix.csv` is client editable, identify its required identity/`ALWAYS` columns, state blank material PHCs make Excel unavailable while PDF remains available, and state the actual Excel file is unavailable until the client schema is approved. Do not describe unimplemented Excel output as delivered.
+- [ ] **Step 2: Run the pre-schema acceptance checkpoint** with `npm test`, `npm run build`, and `npm run build:client`; expect failure only if a required implemented behavior is absent, then stop to repair it in its owning task rather than adding workaround code here. This checkpoint verifies the implemented PDF workflow but does not declare the complete approved BOM feature released.
+- [ ] **Step 3: Make minimum documentation/release changes.** Explain `public/materials/materials_matrix.csv` is client editable, identify its required identity/`ALWAYS` columns, state blank material PHCs make Excel unavailable while PDF remains available, and state the actual Excel file is unavailable until the client schema is approved. Do not describe unimplemented Excel output as delivered or authorize an interim release.
 - [ ] **Step 4: Run final automated verification**:
 
   ```bash
@@ -291,12 +311,11 @@ Tasks 1–7 and 9–10 can proceed without the Excel schema because Excel eligib
   npm run generate:combinations
   shasum -a 256 all_reply_combinations_filtered.csv
   git diff -- all_reply_combinations_filtered.csv
-  npm run build:client
-  node scripts/prepare-client-release.mjs
+  npm run release:client
   ```
 
-  Expect 5,940 generated combinations, both SHA-256 values exactly `221aee09ae3f3faf64b57e7c0a9627f892c354dc3e761cdadfc94c87ee3e2a84`, no generated-CSV diff, and a client release containing `materials/materials_matrix.csv`.
-- [ ] **Step 5: Run final manual static-package verification** from `release/mdc_tool` using a static server: verify Vite base paths, fonts, existing selector, Materials runtime CSV fetch, PDF generation, stale state, local history, and no selector-price effect. If Task 8 is still client-blocked, verify Excel remains visibly unavailable rather than generating a guessed file.
+  Expect 5,940 generated combinations, both SHA-256 values exactly `221aee09ae3f3faf64b57e7c0a9627f892c354dc3e761cdadfc94c87ee3e2a84`, no generated-CSV diff, and the canonical `/mdc_tool/` client package containing `materials/materials_matrix.csv`. Do not change `release-version.json` unless separately authorized, and do not touch the protected ZIP.
+- [ ] **Step 5: Run final manual static-package verification** from `release/mdc_tool` using a static server: verify Vite base paths, fonts, existing selector, Materials runtime CSV fetch, PDF generation, stale state, local history, and no selector-price effect. After Task 8 is complete, also verify the approved Excel export path. Before Task 8, treat this only as a pre-release checkpoint; final BOM release remains gated until the Excel contract is implemented, unless a later explicit user decision authorizes an interim PDF-only Materials/BOM release.
 - [ ] **Step 6: Inspect scope** with `git diff --check`, `git diff -- README.md README_for_client.txt`, and `git status --short`; confirm no changes to questions, PHC registry, generated combinations, protected ZIP, release version, or changelog unless separately requested.
 - [ ] **Step 7: Commit scoped release documentation** with `git add README.md README_for_client.txt` only when changed, then `git commit -m "docs: document Materials BOM workflow"`. If neither README needs a change, make no empty commit and report that Task 10 added no source changes.
 
