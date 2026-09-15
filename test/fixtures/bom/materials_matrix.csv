@@ -1,0 +1,5 @@
+material_phc,description,ALWAYS,CP10,BDP,BDC,CF,BDW,Xx
+MAT-M5,M5 screw,0,4,2,2,0,0,0
+,CF clamp,0,0,0,0,2,0,0
+MAT-BDW,BDW valve,0,0,0,0,0,1,0
+MAT-ALWAYS,Assembly bracket,1,0,0,0,0,0,0
