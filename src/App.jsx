@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import releaseVersion from "../release-version.json";
 import logo from "./assets/Logo_iS2-removebg-preview.png";
 import printLogo from "./assets/iS2 Logo Fundo Branco.png";
+import MaterialsTool from "./MaterialsTool.jsx";
 import { isChlorineRowCompatible, OPEN_COOLING_WATER_TYPES } from "./domain/compatibility.js";
 import { resolveIs2ModelCode } from "./domain/mdc.js";
 import { buildPumpSegment } from "./domain/pumps.js";
@@ -469,6 +470,7 @@ function applyStyleguide(rawStyleguide) {
 }
 
 export default function App() {
+  const [workspace, setWorkspace] = useState("selector");
   const [questionRows, setQuestionRows] = useState({});
   const [answers, setAnswers] = useState(buildEmptyAnswers);
   const [circuito, setCircuito] = useState("");
@@ -837,6 +839,23 @@ export default function App() {
 
   return (
     <main className="page">
+      <nav className="workspaceSwitch screenOnly" aria-label="Workspace">
+        <button
+          className={workspace === "selector" ? "active" : ""}
+          type="button"
+          onClick={() => setWorkspace("selector")}
+        >
+          Selector
+        </button>
+        <button
+          className={workspace === "materials" ? "active" : ""}
+          type="button"
+          onClick={() => setWorkspace("materials")}
+        >
+          Materials
+        </button>
+      </nav>
+      {workspace === "materials" ? <MaterialsTool /> : <>
       <div className="screenOnly">
         <section className="card headerCard">
           <div className="headerRow">
@@ -1147,6 +1166,7 @@ export default function App() {
         ) : null}
 
       </section>
+      </>}
     </main>
   );
 }

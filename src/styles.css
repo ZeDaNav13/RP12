@@ -88,6 +88,78 @@ body {
   min-width: 0;
 }
 
+.workspaceSwitch {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.workspaceSwitch button {
+  background: var(--secondary-white);
+  color: var(--main-blue);
+  padding: 10px 16px;
+}
+
+.workspaceSwitch button.active {
+  background: var(--white);
+}
+
+.materialsTool {
+  display: grid;
+  gap: 30px;
+}
+
+.materialsCard {
+  display: grid;
+  gap: 16px;
+}
+
+.materialsField {
+  max-width: 100%;
+}
+
+.materialsCalculate,
+.materialsExport .primary {
+  width: fit-content;
+}
+
+.materialsMetadata {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+}
+
+.materialsMetadata div {
+  display: grid;
+  gap: 3px;
+}
+
+.materialsMetadata dt {
+  font-weight: 600;
+}
+
+.materialsMetadata dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.materialsNotice,
+.materialsIssues,
+.materialsHistory ul {
+  margin: 0;
+}
+
+.materialsIssues,
+.materialsHistory ul {
+  display: grid;
+  gap: 8px;
+  padding-left: 20px;
+}
+
+.materialsPrintOnly {
+  display: none;
+}
+
 .card {
   background: var(--white);
   color: var(--main-blue);
@@ -684,5 +756,32 @@ td {
 
   .printDetails th {
     font-weight: 600;
+  }
+
+  .workspaceSwitch,
+  .materialsTool {
+    display: none !important;
+  }
+
+  .materialsPrintOnly {
+    display: block;
+    color: var(--print-text);
+  }
+
+  .materialsPrintOnly h1 {
+    color: var(--print-text);
+  }
+
+  .materialsPrintOnly table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .materialsPrintOnly th,
+  .materialsPrintOnly td {
+    border: 1px solid var(--print-line);
+    padding: 8px;
+    background: var(--print-bg);
+    color: var(--print-text);
   }
 }

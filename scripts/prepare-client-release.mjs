@@ -21,7 +21,8 @@ const filesToCopy = [
 
 const directoriesToCopy = [
   { source: "public/questions", target: "questions" },
-  { source: "public/fonts", target: "fonts" }
+  { source: "public/fonts", target: "fonts" },
+  { source: "public/materials", target: "materials" }
 ];
 
 const standaloneFilesToCopy = [
