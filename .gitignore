@@ -1,3 +1,5 @@
 node_modules
 dist
 .DS_Store
+/mdc_tool_ready_to_upload*.zip
+/release/mdc_tool_ready_to_upload*.zip
