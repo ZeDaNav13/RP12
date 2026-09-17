@@ -1,7 +1,3 @@
-function hasNonblankMaterialPhc(row) {
-  return typeof row.materialPhc === "string" && row.materialPhc.trim().length > 0;
-}
-
 function isBlocked(result) {
   return result.state === "blocked";
 }
@@ -13,18 +9,7 @@ export function assertBomPdfEligible(result) {
 }
 
 export function assertBomExcelEligible(result) {
-  if (isBlocked(result)) {
-    throw new Error("Excel export is not eligible");
-  }
-
-  if (result.materialTotals.some((row) => !hasNonblankMaterialPhc(row))) {
-    throw new Error("Excel export requires a material PHC for every included material");
-  }
-
-  const hasUnsupportedProblem = result.issues.some(
-    (issue) => issue.severity === "problem" && issue.kind !== "unmapped_component"
-  );
-  if (hasUnsupportedProblem) {
+  if (isBlocked(result) || result.exportEligibility?.excel !== true) {
     throw new Error("Excel export is not eligible");
   }
 }

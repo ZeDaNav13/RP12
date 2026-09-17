@@ -96,13 +96,13 @@ test("calculateBom makes an unmapped component incomplete without disabling Exce
   assert.deepEqual(result.exportEligibility, { pdf: true, excel: true });
 });
 
-test("calculateBom makes included blank-PHC materials incomplete and Excel-ineligible", () => {
+test("calculateBom keeps included blank-PHC materials incomplete and Excel-eligible", () => {
   const result = calculate({ matrixCsvText: completeMatrixCsv({ blankMaterialPhc: true }) });
 
   assert.equal(result.state, "incomplete");
   assert.equal(result.issues.filter((issue) => issue.kind === "missing_material_phc").length, 1);
   assert.match(result.issues.find((issue) => issue.kind === "missing_material_phc").message, /Unreferenced core/);
-  assert.deepEqual(result.exportEligibility, { pdf: true, excel: false });
+  assert.deepEqual(result.exportEligibility, { pdf: true, excel: true });
 });
 
 test("calculateBom accumulates mixed non-blocking problems and a PHC warning", () => {
@@ -113,7 +113,7 @@ test("calculateBom accumulates mixed non-blocking problems and a PHC warning", (
 
   assert.equal(result.state, "incomplete");
   assert.deepEqual(issueKinds(result), ["phc_not_found", "unmapped_component", "missing_material_phc"]);
-  assert.deepEqual(result.exportEligibility, { pdf: true, excel: false });
+  assert.deepEqual(result.exportEligibility, { pdf: true, excel: true });
 });
 
 test("calculateBom blocks malformed MDC without adding a PHC warning", () => {

@@ -175,18 +175,18 @@ test("reports Excel eligibility only while an eligible result remains fresh", ()
   assert.equal(stale.canExportExcel, false);
 });
 
-test("keeps missing-material-PHC results PDF-eligible and Excel-ineligible", () => {
+test("keeps missing-material-PHC results PDF-eligible and Excel-eligible", () => {
   const viewState = createMaterialsViewState({
     rawMdc: RAW_MDC,
     result: resultWith({
       state: "incomplete",
-      exportEligibility: { pdf: true, excel: false }
+      exportEligibility: { pdf: true, excel: true }
     }),
     historyEvents: []
   });
 
   assert.equal(viewState.canExportPdf, true);
-  assert.equal(viewState.canExportExcel, false);
+  assert.equal(viewState.canExportExcel, true);
 });
 
 test("does not access browser storage or write history", () => {

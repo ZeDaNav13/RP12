@@ -71,7 +71,7 @@ test("representative runtime BOM preserves calculation, PHC, ordering, and blank
     "unmapped_component",
     "missing_material_phc"
   ]);
-  assert.deepEqual(result.exportEligibility, { pdf: true, excel: false });
+  assert.deepEqual(result.exportEligibility, { pdf: true, excel: true });
 });
 
 test("AQ remains parse-valid and incomplete when its matrix column is absent", async () => {

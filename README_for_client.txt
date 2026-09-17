@@ -53,9 +53,9 @@ Important rules:
 - Unmapped technical components produce an incomplete BOM with its issues shown.
 - Components / Materials shows component-to-material provenance. Materials Total shows consolidated quantities.
 - PDF contains Materials Total only, not provenance rows.
-- The planned Excel export will be a technical materials-list workbook, not a PHC import. It will contain material PHC reference, description, and total quantity; relevant MDC, equipment-PHC, and incomplete-warning context may also be shown.
+- Excel is a technical materials-list workbook, not a PHC import. It contains material PHC reference, description, and total quantity; relevant MDC, equipment-PHC, and incomplete-warning context may also be shown.
 - The browser keeps local export history for each MDC. A repeated export in the same format asks for confirmation before exporting again.
-- A blank material PHC marks the BOM incomplete and remains visible, but does not block PDF export or the planned Excel export.
+- A blank material PHC marks the BOM incomplete and remains visible, but does not block PDF or Excel export.
 
 Materials matrix rules:
 - Edit only: mdc_tool/materials/materials_matrix.csv

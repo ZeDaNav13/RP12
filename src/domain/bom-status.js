@@ -32,7 +32,7 @@ export function deriveBomStatus({ phcReference, unmappedComponents, missingMater
     issues,
     exportEligibility: {
       pdf: true,
-      excel: missingMaterialPhcs.length === 0
+      excel: true
     }
   };
 }

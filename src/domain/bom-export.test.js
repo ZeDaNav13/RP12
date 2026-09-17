@@ -179,7 +179,7 @@ test("Excel eligibility allows unmapped-component incompleteness with material P
   assert.doesNotThrow(() => assertBomExcelEligible(incomplete));
 });
 
-test("Excel eligibility rejects an included material total without a material PHC", () => {
+test("Excel eligibility allows an included material total without a material PHC", () => {
   const incomplete = resultWith({
     state: "incomplete",
     materialTotals: [{
@@ -189,10 +189,10 @@ test("Excel eligibility rejects an included material total without a material PH
       description: "Unreferenced core",
       quantity: 2
     }],
-    exportEligibility: { pdf: true, excel: false }
+    exportEligibility: { pdf: true, excel: true }
   });
 
-  assert.throws(() => assertBomExcelEligible(incomplete), /material PHC/);
+  assert.doesNotThrow(() => assertBomExcelEligible(incomplete));
 });
 
 test("Excel eligibility rejects blocked results", () => {

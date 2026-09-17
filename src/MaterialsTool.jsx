@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { calculateBom } from "./domain/bom.js";
 import { createBomExportModel, assertBomPdfEligible } from "./domain/bom-export.js";
+import { exportBomExcel, materialsExcelFilename } from "./domain/bom-excel-workflow.js";
 import { createBomHistoryStore } from "./domain/bom-history.js";
 import { createMaterialsViewState } from "./domain/bom-ui-state.js";
 import { saveBomPdf } from "./bomPdf.js";
@@ -109,6 +110,27 @@ export default function MaterialsTool() {
     }
   }
 
+  async function exportExcel() {
+    if (!result || !viewState.canExportExcel) return;
+
+    const normalizedMdc = result.input.normalizedMdc;
+    try {
+      const outcome = await exportBomExcel({
+        result,
+        canExportExcel: viewState.canExportExcel,
+        historyStore,
+        confirm: () => window.confirm("An Excel file for this MDC was already exported. Export again?"),
+        filename: materialsExcelFilename(normalizedMdc)
+      });
+      if (!outcome.exported) return;
+
+      setHistoryEvents(outcome.historyEvents);
+      setExportMessage("Excel exported.");
+    } catch {
+      setExportMessage("Excel export failed.");
+    }
+  }
+
   const hasResult = result !== null;
   const isBlocked = result?.state === "blocked";
 
@@ -195,9 +217,10 @@ export default function MaterialsTool() {
               <button className="primary" type="button" onClick={exportPdf} disabled={!viewState.canExportPdf}>
                 Export PDF
               </button>
+              <button className="primary" type="button" onClick={exportExcel} disabled={!viewState.canExportExcel}>
+                Export Excel
+              </button>
               {exportMessage ? <p className="materialsNotice">{exportMessage}</p> : null}
-              <p className="materialsNotice">Client PHC import schema required before Excel export is available.</p>
-              <p className="materialsNotice">Excel eligibility: {viewState.canExportExcel ? "ready when schema is supplied" : "not eligible"}</p>
             </section>
 
             {!isBlocked ? (
