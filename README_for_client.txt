@@ -10,8 +10,9 @@ MDC Tool - Quick Upload Guide
 2) What is inside the package
 - `index.html` + `assets/` = the app itself.
 - `questions/` = editable CSV files for the dropdowns.
+- `materials/materials_matrix.csv` = editable Materials BOM runtime data.
 - `styleguide.json` = colors used by the tool.
-- `phc_integration.csv` = PHC import/support export.
+- `phc_integration.csv` = fixed equipment MDC -> PHC lookup data; it is not a materials-import file.
 - `all_reply_combinations_filtered.csv` = generated combinations export.
 
 3) How to update the CSV data
@@ -44,6 +45,23 @@ Important rules:
   - Other circuitos -> CS4 chlorine probes.
 - pH and conductivity probes always show all their options.
 
-6) If something looks wrong
+6) Materials BOM
+- Selector is the default workspace. Materials is separate and does not change selector prices or selections.
+- Open Materials, enter an MDC reference, and click Calculate BOM.
+- A malformed MDC blocks calculation and does not show material rows.
+- If the equipment PHC is missing, the tool shows: PHC reference not found.
+- Unmapped technical components produce an incomplete BOM with its issues shown.
+- Components / Materials shows component-to-material provenance. Materials Total shows consolidated quantities.
+- PDF contains Materials Total only, not provenance rows.
+- The planned Excel export will be a technical materials-list workbook, not a PHC import. It will contain material PHC reference, description, and total quantity; relevant MDC, equipment-PHC, and incomplete-warning context may also be shown.
+- The browser keeps local export history for each MDC. A repeated export in the same format asks for confirmation before exporting again.
+- A blank material PHC marks the BOM incomplete and remains visible, but does not block PDF export or the planned Excel export.
+
+Materials matrix rules:
+- Edit only: mdc_tool/materials/materials_matrix.csv
+- Do NOT rename the required leading headers: material_phc, description, ALWAYS
+- Other headers are case-sensitive technical MDC component codes.
+
+7) If something looks wrong
 - Re-check that file names and headers were not changed.
 - Re-upload the previous CSV backup if available.

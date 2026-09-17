@@ -70,6 +70,7 @@ The client can safely update:
 
 - `public/questions/*.csv`
 - `public/styleguide.json`
+- `public/materials/materials_matrix.csv`
 
 After CSV changes, regenerate the combinations export if needed:
 
@@ -78,6 +79,20 @@ npm run generate:combinations
 ```
 
 Then rebuild the release package.
+
+## Materials BOM
+
+The default workspace remains the **Selector**. The separate **Materials** workspace is for a manual MDC calculation and does not use selector pricing or change selector state.
+
+- Enter an MDC reference and select **Calculate BOM**. A malformed MDC blocks calculation and produces no material rows.
+- A missing equipment PHC is shown as `PHC reference not found`. Unmapped technical components produce an incomplete BOM with its existing issues displayed.
+- **Components / Materials** shows contribution provenance; **Materials Total** shows consolidated totals. PDF exports the consolidated totals only. The planned Excel export will use the same Materials Total data.
+- A missing material PHC marks the BOM incomplete and remains visible to the user, but does not block PDF export or the planned Excel export.
+- Export history is local to the browser/workstation. It is visible after calculation; a repeat export in the same format for the same MDC requires confirmation.
+
+`public/materials/materials_matrix.csv` is client-editable runtime data. Its leading identity columns must remain exactly `material_phc`, `description`, and `ALWAYS`; all other component columns are technical MDC codes and are case-sensitive.
+
+The planned Materials Excel export will be a technical materials-list workbook, not a PHC import. It will contain material PHC reference, description, and total quantity; relevant MDC, equipment-PHC, and incomplete-warning context may appear alongside the table. `phc_integration.csv` remains the equipment MDC-to-PHC lookup file.
 
 ## Supporting docs
 
