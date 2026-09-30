@@ -9,7 +9,10 @@ function materialIdentity(row) {
 
 function addContributions(contributions, matrixRows, sourceComponent, sourceCount) {
   for (const row of matrixRows) {
-    const quantity = row.quantities[sourceComponent] * sourceCount;
+    const rowQuantity = row.quantities[sourceComponent];
+    if (rowQuantity === null) continue;
+
+    const quantity = rowQuantity * sourceCount;
     if (quantity > 0) {
       contributions.push({
         sourceComponent,
@@ -33,7 +36,15 @@ export function calculateBomMaterials(parsedMdc, matrix) {
       continue;
     }
 
+    if (matrix.rows.some((row) => row.quantities[component.code] === null)) {
+      unmappedComponents.push(component.code);
+    }
+
     addContributions(contributions, matrix.rows, component.code, component.count);
+  }
+
+  if (matrix.rows.some((row) => row.quantities.ALWAYS === null)) {
+    unmappedComponents.push("ALWAYS");
   }
 
   addContributions(contributions, matrix.rows, "ALWAYS", 1);

@@ -10,10 +10,10 @@ function invalidMatrix(row, column, message) {
 }
 
 function parseQuantity(value) {
-  if (value === "") return 0;
+  if (value === "") return null;
 
   const quantity = Number(value);
-  if (!Number.isFinite(quantity) || quantity < 0) return null;
+  if (!Number.isFinite(quantity) || quantity < 0) return undefined;
 
   return quantity;
 }
@@ -82,7 +82,7 @@ export function parseMaterialsMatrix(csvText) {
     for (let quantityIndex = 0; quantityIndex < componentHeaders.length; quantityIndex += 1) {
       const componentCode = componentHeaders[quantityIndex];
       const quantity = parseQuantity(quantityValues[quantityIndex]);
-      if (quantity === null) {
+      if (quantity === undefined) {
         errors.push({
           kind: "invalid_matrix",
           row: sourceRow,

@@ -96,6 +96,27 @@ test("calculateBom makes an unmapped component incomplete without disabling Exce
   assert.deepEqual(result.exportEligibility, { pdf: true, excel: true });
 });
 
+test("calculateBom makes blank component quantities incomplete without blocking known contributions", () => {
+  const result = calculate({
+    matrixCsvText: matrixCsv(["CP10", "Xx", "AF"], [
+      ["MAT-CORE", "Core material", "0", "1", "", "3"],
+      ["MAT-ALWAYS", "Always material", "0.5", "0", "0", "0"]
+    ])
+  });
+
+  assert.equal(result.state, "incomplete");
+  assert.deepEqual(
+    result.contributions.map(({ sourceComponent, quantity }) => ({ sourceComponent, quantity })),
+    [
+      { sourceComponent: "CP10", quantity: 1 },
+      { sourceComponent: "AF", quantity: 3 },
+      { sourceComponent: "ALWAYS", quantity: 0.5 }
+    ]
+  );
+  assert.equal(result.issues.some((issue) => issue.kind === "unmapped_component" && issue.message.includes("Xx")), true);
+  assert.deepEqual(result.exportEligibility, { pdf: true, excel: true });
+});
+
 test("calculateBom keeps included blank-PHC materials incomplete and Excel-eligible", () => {
   const result = calculate({ matrixCsvText: completeMatrixCsv({ blankMaterialPhc: true }) });
 

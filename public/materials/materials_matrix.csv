@@ -1,15 +1,15 @@
-material_phc,description,ALWAYS,CP10,CP20,CP30,CP40,CP50,CP60,BDP,BDC,AF,BF,CF,FF,BDW
-,Parafuso Sextavado interior Inox M5x16,0,4,4,4,4,4,4,2,2,2,2,2,2,0
-,Abraçadeira Astore d32,0,0,0,0,0,0,0,0,0,2,2,2,2,0
-,CORPO VALVOLA SINTESI 2 VIE MF IN,0,0,0,0,0,0,0,0,0,0,0,0,0,1
-,SERVOCOMANDO SINTESI 2 PUNTI ON-OFF 8 NR,0,0,0,0,0,0,0,0,0,0,0,0,0,1
-,"Parafuso Autoroscante 4,5x20 Philips INOX 304",2,0,0,0,0,0,0,0,0,0,0,0,0,0
-,Platine de montagem painel 900mmx750mm,1,0,0,0,0,0,0,0,0,0,0,0,0,0
-,"Suporte INOX 304 Filtro NW 25, 32 FP3",1,0,0,0,0,0,0,0,0,0,0,0,0,0
-,"Filtro HYDRA HOT 1'' - com elemento RLH 90mic. Suporte Inox304 AQ",1,0,0,0,0,0,0,0,0,0,0,0,0,0
-,Porca de Redução PVC 1´´x1-4´´,2,0,0,0,0,0,0,0,0,0,0,0,0,0
-,Mt Tubo 6x8mm Rolo,0.5,0,0,0,0,0,0,0,0,0,0,0,0,0
-,MT Calha electrica para Q.Electrico 40(L)x40(A),0.4,0,0,0,0,0,0,0,0,0,0,0,0,0
-,MT Manga Termoretratil 4.8-2.4mm,1.2,0,0,0,0,0,0,0,0,0,0,0,0,0
-,MT Cabo LIYY 3x0.25,1,0,0,0,0,0,0,0,0,0,0,0,0,0
-,Transição 1-4''M - 8mm ER JG Preto Plastico,2,0,0,0,0,0,0,0,0,0,0,0,0,0
+material_phc,description,ALWAYS,CP10,CP20,CP30,CP40,CP50,CP60,BDP,BDC,Cl2mA,Cl5mA,Cl10mA,Cl20mA,Cl2m0c,Cl20m0c,pH,CD,AF,AQ,BF,BQ,CF,CQ,DF,FF,BDW
+,Parafuso Sextavado interior Inox M5x16,0,4,4,4,4,4,4,2,2,,,,,,,,,2,,2,,2,,,2,0
+,Abraçadeira Astore d32,0,0,0,0,0,0,0,0,0,,,,,,,,,2,,2,,2,,,2,0
+,CORPO VALVOLA SINTESI 2 VIE MF IN,0,0,0,0,0,0,0,0,0,,,,,,,,,0,,0,,0,,,0,1
+,SERVOCOMANDO SINTESI 2 PUNTI ON-OFF 8 NR,0,0,0,0,0,0,0,0,0,,,,,,,,,0,,0,,0,,,0,1
+,"Parafuso Autoroscante 4,5x20 Philips INOX 304",2,0,0,0,0,0,0,0,0,,,,,,,,,0,,0,,0,,,0,0
+,Platine de montagem painel 900mmx750mm,1,0,0,0,0,0,0,0,0,,,,,,,,,0,,0,,0,,,0,0
+,"Suporte INOX 304 Filtro NW 25, 32 FP3",1,0,0,0,0,0,0,0,0,,,,,,,,,0,,0,,0,,,0,0
+,"Filtro HYDRA HOT 1'' - com elemento RLH 90mic. Suporte Inox304 AQ",1,0,0,0,0,0,0,0,0,,,,,,,,,0,,0,,0,,,0,0
+,Porca de Redução PVC 1´´x1-4´´,2,0,0,0,0,0,0,0,0,,,,,,,,,0,,0,,0,,,0,0
+,Mt Tubo 6x8mm Rolo,0.5,0,0,0,0,0,0,0,0,,,,,,,,,0,,0,,0,,,0,0
+,MT Calha electrica para Q.Electrico 40(L)x40(A),0.4,0,0,0,0,0,0,0,0,,,,,,,,,0,,0,,0,,,0,0
+,MT Manga Termoretratil 4.8-2.4mm,1.2,0,0,0,0,0,0,0,0,,,,,,,,,0,,0,,0,,,0,0
+,MT Cabo LIYY 3x0.25,1,0,0,0,0,0,0,0,0,,,,,,,,,0,,0,,0,,,0,0
+,Transição 1-4''M - 8mm ER JG Preto Plastico,2,0,0,0,0,0,0,0,0,,,,,,,,,0,,0,,0,,,0,0

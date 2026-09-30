@@ -103,6 +103,25 @@ test("treats a present zero component column as mapped without a contribution", 
   assert.deepEqual(result.missingMaterialPhcs, []);
 });
 
+test("keeps known contributions when a present component column has unknown quantities", () => {
+  const result = calculateBomMaterials(
+    parsedMdc([{ code: "NEWCODE", count: 2 }]),
+    matrix(
+      [
+        matrixRow("matrix-row-2", "MAT-UNKNOWN", "Unknown mapping", { NEWCODE: null, ALWAYS: 0 }),
+        matrixRow("matrix-row-3", "MAT-KNOWN", "Known mapping", { NEWCODE: 3, ALWAYS: 0 }),
+        matrixRow("matrix-row-4", "MAT-ZERO", "Confirmed zero", { NEWCODE: 0, ALWAYS: 0 })
+      ],
+      ["ALWAYS", "NEWCODE"]
+    )
+  );
+
+  assert.deepEqual(result.contributions, [
+    { sourceComponent: "NEWCODE", sourceCount: 2, materialPhc: "MAT-KNOWN", matrixRowId: "matrix-row-3", description: "Known mapping", quantity: 6 }
+  ]);
+  assert.deepEqual(result.unmappedComponents, ["NEWCODE"]);
+});
+
 test("uses future matrix component columns without a hardcoded catalogue", () => {
   const result = calculateBomMaterials(
     parsedMdc([{ code: "NEWCODE", count: 2 }]),

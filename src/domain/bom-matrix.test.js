@@ -4,9 +4,39 @@ import path from "node:path";
 import test from "node:test";
 
 import { parseBomCsv } from "./bom-csv.js";
+import { parseBomMdc } from "./bom-mdc.js";
 import { parseMaterialsMatrix } from "./bom-matrix.js";
 
 const COMPONENT_HEADERS = [
+  "ALWAYS",
+  "CP10",
+  "CP20",
+  "CP30",
+  "CP40",
+  "CP50",
+  "CP60",
+  "BDP",
+  "BDC",
+  "Cl2mA",
+  "Cl5mA",
+  "Cl10mA",
+  "Cl20mA",
+  "Cl2m0c",
+  "Cl20m0c",
+  "pH",
+  "CD",
+  "AF",
+  "AQ",
+  "BF",
+  "BQ",
+  "CF",
+  "CQ",
+  "DF",
+  "FF",
+  "BDW"
+];
+
+const KNOWN_COMPONENT_HEADERS = [
   "ALWAYS",
   "CP10",
   "CP20",
@@ -21,6 +51,21 @@ const COMPONENT_HEADERS = [
   "CF",
   "FF",
   "BDW"
+];
+
+const UNKNOWN_COMPONENT_HEADERS = [
+  "Cl2mA",
+  "Cl5mA",
+  "Cl10mA",
+  "Cl20mA",
+  "Cl2m0c",
+  "Cl20m0c",
+  "pH",
+  "CD",
+  "AQ",
+  "BQ",
+  "CQ",
+  "DF"
 ];
 
 function matrixCsv(headers, rows) {
@@ -45,8 +90,13 @@ function assertMatrixError(csvText, row, column) {
   );
 }
 
-function zeroQuantities(overrides = {}) {
-  return Object.fromEntries(COMPONENT_HEADERS.map((header) => [header, 0]).concat(Object.entries(overrides)));
+function initialQuantities(overrides = {}) {
+  return Object.fromEntries(
+    COMPONENT_HEADERS.map((header) => [
+      header,
+      UNKNOWN_COMPONENT_HEADERS.includes(header) ? null : (overrides[header] ?? 0)
+    ])
+  );
 }
 
 test("parseBomCsv parses quotes, doubled quotes, CRLF, and terminal newlines", () => {
@@ -95,7 +145,7 @@ test("parseMaterialsMatrix preserves valid quantities and rejects invalid source
 
   assert.equal(validResult.ok, true, JSON.stringify(validResult));
   assert.deepEqual(validResult.value.rows[0].quantities, {
-    ALWAYS: 0,
+    ALWAYS: null,
     AF: 0,
     BF: 0.5,
     CF: 0.4,
@@ -168,16 +218,25 @@ test("initial runtime matrix has only approved material rows and component colum
   assert.equal(result.value.rows.length, 14);
   assert.deepEqual([...result.value.componentCodes], COMPONENT_HEADERS);
   assert.equal(result.value.rows.every((row) => row.materialPhc === ""), true);
-  ["AQ", "BQ", "CQ", "DF", "Cl2mA", "pH", "CD"].forEach((code) => {
-    assert.equal(result.value.componentCodes.has(code), false);
-  });
+  assert.equal(
+    result.value.rows.every((row) =>
+      KNOWN_COMPONENT_HEADERS.every((header) => Number.isFinite(row.quantities[header]))
+    ),
+    true
+  );
+  assert.equal(
+    result.value.rows.every((row) =>
+      UNKNOWN_COMPONENT_HEADERS.every((header) => row.quantities[header] === null)
+    ),
+    true
+  );
 
   assert.deepEqual(
     result.value.rows.map((row) => ({ description: row.description, quantities: row.quantities })),
     [
       {
         description: "Parafuso Sextavado interior Inox M5x16",
-        quantities: zeroQuantities({
+        quantities: initialQuantities({
           CP10: 4,
           CP20: 4,
           CP30: 4,
@@ -194,56 +253,75 @@ test("initial runtime matrix has only approved material rows and component colum
       },
       {
         description: "Abraçadeira Astore d32",
-        quantities: zeroQuantities({ AF: 2, BF: 2, CF: 2, FF: 2 })
+        quantities: initialQuantities({ AF: 2, BF: 2, CF: 2, FF: 2 })
       },
       {
         description: "CORPO VALVOLA SINTESI 2 VIE MF IN",
-        quantities: zeroQuantities({ BDW: 1 })
+        quantities: initialQuantities({ BDW: 1 })
       },
       {
         description: "SERVOCOMANDO SINTESI 2 PUNTI ON-OFF 8 NR",
-        quantities: zeroQuantities({ BDW: 1 })
+        quantities: initialQuantities({ BDW: 1 })
       },
       {
         description: "Parafuso Autoroscante 4,5x20 Philips INOX 304",
-        quantities: zeroQuantities({ ALWAYS: 2 })
+        quantities: initialQuantities({ ALWAYS: 2 })
       },
       {
         description: "Platine de montagem painel 900mmx750mm",
-        quantities: zeroQuantities({ ALWAYS: 1 })
+        quantities: initialQuantities({ ALWAYS: 1 })
       },
       {
         description: "Suporte INOX 304 Filtro NW 25, 32 FP3",
-        quantities: zeroQuantities({ ALWAYS: 1 })
+        quantities: initialQuantities({ ALWAYS: 1 })
       },
       {
         description: "Filtro HYDRA HOT 1'' - com elemento RLH 90mic. Suporte Inox304 AQ",
-        quantities: zeroQuantities({ ALWAYS: 1 })
+        quantities: initialQuantities({ ALWAYS: 1 })
       },
       {
         description: "Porca de Redução PVC 1´´x1-4´´",
-        quantities: zeroQuantities({ ALWAYS: 2 })
+        quantities: initialQuantities({ ALWAYS: 2 })
       },
       {
         description: "Mt Tubo 6x8mm Rolo",
-        quantities: zeroQuantities({ ALWAYS: 0.5 })
+        quantities: initialQuantities({ ALWAYS: 0.5 })
       },
       {
         description: "MT Calha electrica para Q.Electrico 40(L)x40(A)",
-        quantities: zeroQuantities({ ALWAYS: 0.4 })
+        quantities: initialQuantities({ ALWAYS: 0.4 })
       },
       {
         description: "MT Manga Termoretratil 4.8-2.4mm",
-        quantities: zeroQuantities({ ALWAYS: 1.2 })
+        quantities: initialQuantities({ ALWAYS: 1.2 })
       },
       {
         description: "MT Cabo LIYY 3x0.25",
-        quantities: zeroQuantities({ ALWAYS: 1 })
+        quantities: initialQuantities({ ALWAYS: 1 })
       },
       {
         description: "Transição 1-4''M - 8mm ER JG Preto Plastico",
-        quantities: zeroQuantities({ ALWAYS: 2 })
+        quantities: initialQuantities({ ALWAYS: 2 })
       }
     ]
   );
+});
+
+test("initial runtime matrix covers every component from canonical generated MDC references", async () => {
+  const combinationsPath = path.join(process.cwd(), "all_reply_combinations_filtered.csv");
+  const [headers, ...rows] = parseBomCsv(await readFile(combinationsPath, "utf8"));
+  const assemblyCodeIndex = headers.indexOf("assembly_code");
+  const currentComponentCodes = new Set();
+
+  for (const row of rows) {
+    const parsed = parseBomMdc(row[assemblyCodeIndex]);
+    assert.equal(parsed.ok, true, row[assemblyCodeIndex]);
+    parsed.value.components.forEach((component) => currentComponentCodes.add(component.code));
+  }
+
+  assert.deepEqual(
+    [...currentComponentCodes].sort(),
+    COMPONENT_HEADERS.filter((header) => header !== "ALWAYS").sort()
+  );
+  assert.equal(currentComponentCodes.has("PT"), false);
 });
