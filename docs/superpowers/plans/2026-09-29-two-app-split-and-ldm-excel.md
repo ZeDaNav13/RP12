@@ -87,8 +87,8 @@
 
 **Files:**
 - Create: `src/SelectorApp.jsx`, `src/MaterialsApp.jsx`, `src/shared/ToolHeader.jsx`, `test/app-entry-isolation-contract.test.js`
-- Modify: `src/MaterialsTool.jsx`, `src/styles.css`, selector/LDM source-contract tests that currently read `src/App.jsx`
-- Delete: `src/App.jsx` after all selector source-contract tests target `src/SelectorApp.jsx`
+- Modify: `src/main.jsx`, `src/MaterialsTool.jsx`, `src/styles.css`, selector/LDM source-contract tests that currently read `src/App.jsx`
+- Delete: `src/App.jsx` after all source-contract tests target the extracted roots
 
 **Interfaces:**
 - Consumes: current selector state/technical helper imports and the current `MaterialsTool` public component.
@@ -97,10 +97,11 @@
 - [ ] RED: create `test/app-entry-isolation-contract.test.js` before extraction. It must assert: `SelectorApp` does not import/render `MaterialsTool`, does not declare `workspace`/`setWorkspace`, and does not fetch LDM data; `MaterialsApp` does not import selector question definitions/helpers or fetch `questions/`; `ToolHeader` renders a title/logo only and no navigation control. The current combined `App.jsx` must fail this contract.
 - [ ] Run `node --test test/app-entry-isolation-contract.test.js` and record the intended RED: the current combined component contains workspace state/switching and both data paths.
 - [ ] GREEN: move the existing selector implementation, including its current technical-helper and price behavior, into `SelectorApp`; create `MaterialsApp` as the LDM-only shell around `MaterialsTool`; introduce the shared presentational header with no app-selection control; remove the workspace switch and its dead responsive styles; update source-contract test file paths deliberately rather than weakening their assertions.
+- [ ] Because the legacy root entry remains until Task 4, update `src/main.jsx` to import and mount `SelectorApp` only. It must not import `MaterialsApp`; this temporary compatibility entry keeps the existing `npm run build` valid after `src/App.jsx` is deleted. Task 4 remains responsible for replacing/deleting legacy `src/main.jsx` once the two dedicated Vite entries are proven.
 - [ ] Keep document titles as app-root concerns: Selector must set `Ferramenta MDC - Selector`; LDM must set `Ferramenta MDC - Materiais`. Do not introduce routing, URL changes, location/history manipulation, or a title subsystem.
 - [ ] GREEN verification: run `node --test test/app-entry-isolation-contract.test.js test/app-phc-candidate-contract.test.js test/final-ui-refinement-contract.test.js test/materials-localization-ui-contract.test.js`, then `npm test`, `npm run build`, and `git diff --check`.
 - [ ] Run the generator invariant commands and verify the diff contains no CSV, generator, PHC registry, pricing, or export workflow change.
-- [ ] Request external review of the full source/test diff, with special attention to deletion of `src/App.jsx`, retained selector behavior, and absence of cross-app imports.
+- [ ] Request external review of the full source/test diff. Review must confirm that legacy `src/main.jsx` mounts only `SelectorApp`, contains no Materials/LDM import or navigation, and that `src/App.jsx` is deleted; it must also confirm retained selector behavior, absence of cross-app imports, and that Task 4 still owns dedicated Selector/LDM Vite entry creation and deletion of the temporary legacy main entry.
 - [ ] **Commit only after external approval:** stage only Task 3's reviewed root, style, and contract files; verify cached scope/check; commit on the separate authorization; record evidence and update Notion.
 
 ### Task 4: Add independent Vite entry points, development commands, and build outputs
