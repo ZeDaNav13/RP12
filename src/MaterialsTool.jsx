@@ -1,11 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 
 import { calculateBom } from "./domain/bom.js";
-import { createBomExportModel, assertBomPdfEligible } from "./domain/bom-export.js";
 import { exportBomExcel, materialsExcelFilename } from "./domain/bom-excel-workflow.js";
 import { createBomHistoryStore } from "./domain/bom-history.js";
 import { createMaterialsViewState } from "./domain/bom-ui-state.js";
-import { saveBomPdf } from "./bomPdf.js";
+import { formatMaterialIssue, formatMaterialState } from "./materials-ui-copy.js";
 
 function formatExportedAt(value) {
   return new Date(value).toLocaleString("pt-PT");
@@ -64,6 +63,7 @@ export default function MaterialsTool() {
     () => createMaterialsViewState({ rawMdc, result, historyEvents }),
     [historyEvents, rawMdc, result]
   );
+  const excelHistoryEvents = viewState.historyEvents.filter((event) => event.format === "excel");
 
   function calculate() {
     if (runtimeData.status !== "ready") return;
@@ -82,32 +82,9 @@ export default function MaterialsTool() {
     );
   }
 
-  async function exportPdf() {
+  function printMaterials() {
     if (!result || !viewState.canExportPdf) return;
-
-    const normalizedMdc = result.input.normalizedMdc;
-    if (historyStore.requiresConfirmation(normalizedMdc, "pdf")) {
-      const confirmed = window.confirm("A PDF for this MDC was already exported. Export again?");
-      if (!confirmed) return;
-    }
-
-    try {
-      assertBomPdfEligible(result);
-      const model = createBomExportModel(result);
-      await saveBomPdf({
-        model,
-        filename: `${normalizedMdc}-materials-bom.pdf`
-      });
-      historyStore.recordSuccessfulExport({
-        normalizedMdc,
-        phcReference: model.phcReference,
-        format: "pdf"
-      });
-      setHistoryEvents(historyStore.eventsFor(normalizedMdc));
-      setExportMessage("PDF exported.");
-    } catch {
-      setExportMessage("PDF export failed.");
-    }
+    window.print();
   }
 
   async function exportExcel() {
@@ -119,15 +96,15 @@ export default function MaterialsTool() {
         result,
         canExportExcel: viewState.canExportExcel,
         historyStore,
-        confirm: () => window.confirm("An Excel file for this MDC was already exported. Export again?"),
+        confirm: () => window.confirm("Já foi exportado um ficheiro Excel para este MDC. Pretende exportá-lo novamente?"),
         filename: materialsExcelFilename(normalizedMdc)
       });
       if (!outcome.exported) return;
 
       setHistoryEvents(outcome.historyEvents);
-      setExportMessage("Excel exported.");
+      setExportMessage("Excel exportado.");
     } catch {
-      setExportMessage("Excel export failed.");
+      setExportMessage("Não foi possível exportar o Excel.");
     }
   }
 
@@ -138,51 +115,56 @@ export default function MaterialsTool() {
     <>
       <section className="materialsTool screenOnly">
         <section className="card materialsCard">
-          <h1>Materials BOM</h1>
-          <label className="materialsField">
-            <span>MDC reference</span>
-            <input
-              value={rawMdc}
-              onChange={(event) => setRawMdc(event.target.value)}
-              placeholder="MDC_iS.CP10_M1Cl2mA_AF"
-            />
-          </label>
-          {runtimeData.status === "loading" ? <p className="materialsNotice">Loading Materials data…</p> : null}
-          {runtimeData.status === "error" ? <p className="materialsNotice">Unable to load Materials runtime data.</p> : null}
-          <button
-            className="primary materialsCalculate"
-            type="button"
-            onClick={calculate}
-            disabled={runtimeData.status !== "ready"}
-          >
-            Calculate BOM
-          </button>
+          <h1>Modelo MdC</h1>
+          <div className="materialsInputRow">
+            <label className="materialsField">
+              <span>Referência MDC</span>
+              <input
+                value={rawMdc}
+                onChange={(event) => setRawMdc(event.target.value)}
+                placeholder="colocar referência MDC aqui"
+              />
+            </label>
+            <button
+              className="primary materialsCalculate"
+              type="button"
+              onClick={calculate}
+              disabled={runtimeData.status !== "ready"}
+            >
+              Mostrar Materiais
+            </button>
+          </div>
+          {runtimeData.status === "loading" ? <p className="materialsNotice">A carregar dados de materiais…</p> : null}
+          {runtimeData.status === "error" ? <p className="materialsNotice">Não foi possível carregar os dados de materiais.</p> : null}
         </section>
 
         {hasResult ? (
           <>
-            <section className="card materialsCard">
-              <h2>Calculation result</h2>
-              <dl className="materialsMetadata">
-                <div><dt>Normalized MDC</dt><dd>{result.input.normalizedMdc ?? "-"}</dd></div>
-                <div><dt>Equipment PHC</dt><dd>{result.phc.reference ?? "PHC reference not found"}</dd></div>
-                <div><dt>State</dt><dd>{result.state}</dd></div>
-              </dl>
-              {viewState.isStale ? <p className="materialsNotice">This result is stale. Calculate again before exporting.</p> : null}
+            <section className="card materialsCard materialsProcessing">
+              <h2>Processamento</h2>
+              <div className="summaryList">
+                <div className="summaryRow"><span className="summaryLabel">MDC normalizado</span><strong className="summaryValue">{result.input.normalizedMdc ?? "-"}</strong></div>
+                <div className="summaryRow"><span className="summaryLabel">PHC do equipamento</span><strong className="summaryValue">{result.phc.reference ?? "Referência PHC não encontrada"}</strong></div>
+                <div className="summaryRow"><span className="summaryLabel">Estado</span><strong className="summaryValue">{formatMaterialState(result.state)}</strong></div>
+              </div>
+              {viewState.isStale ? <p className="materialsNotice">O resultado está desatualizado. Calcule novamente antes de exportar.</p> : null}
               {result.issues.length > 0 ? (
-                <ul className="materialsIssues">
-                  {result.issues.map((issue, index) => <li key={`${issue.kind}-${index}`}>{issue.message}</li>)}
-                </ul>
+                <details className="materialsIssueDetails">
+                  <summary>Detalhes</summary>
+                  <ul className="materialsIssues">
+                    {result.issues.map((issue, index) => <li key={`${issue.kind}-${index}`}>{formatMaterialIssue(issue)}</li>)}
+                  </ul>
+                </details>
               ) : null}
             </section>
 
             {!isBlocked ? (
               <>
                 <section className="card materialsCard materialsComponents">
-                  <h2>Components / Materials</h2>
+                  <h2>Materiais por Componente</h2>
                   <div className="tableWrap">
                     <table>
-                      <thead><tr><th>Component</th><th>Material PHC</th><th>Description</th><th>Quantity</th></tr></thead>
+                      <thead><tr><th>Componente</th><th>PHC do material</th><th>Descrição</th><th>Quantidade</th></tr></thead>
                       <tbody>
                         {viewState.componentRows.map((row, index) => (
                           <tr key={`${row.sourceComponent}-${row.matrixRowId}-${index}`}>
@@ -195,10 +177,10 @@ export default function MaterialsTool() {
                 </section>
 
                 <section className="card materialsCard materialsTotals">
-                  <h2>Materials Total</h2>
+                  <h2>Lista Completa</h2>
                   <div className="tableWrap">
                     <table>
-                      <thead><tr><th>Material PHC</th><th>Description</th><th>Quantity</th></tr></thead>
+                      <thead><tr><th>PHC do material</th><th>Descrição</th><th>Quantidade</th></tr></thead>
                       <tbody>
                         {viewState.totalRows.map((row, index) => (
                           <tr key={`${row.materialIdentity}-${index}`}>
@@ -212,24 +194,29 @@ export default function MaterialsTool() {
               </>
             ) : null}
 
-            <section className="card materialsCard materialsExport">
-              <h2>Export</h2>
-              <button className="primary" type="button" onClick={exportPdf} disabled={!viewState.canExportPdf}>
-                Export PDF
-              </button>
-              <button className="primary" type="button" onClick={exportExcel} disabled={!viewState.canExportExcel}>
-                Export Excel
-              </button>
+            <section className="materialsExportSection">
+              <div className="materialsExportActions">
+                <section className="card printActions">
+                  <button className="primary" type="button" onClick={printMaterials} disabled={!viewState.canExportPdf}>
+                    Imprimir / Guardar PDF
+                  </button>
+                </section>
+                <section className="card printActions">
+                  <button className="primary" type="button" onClick={exportExcel} disabled={!viewState.canExportExcel}>
+                    Guardar Excel
+                  </button>
+                </section>
+              </div>
               {exportMessage ? <p className="materialsNotice">{exportMessage}</p> : null}
             </section>
 
             {!isBlocked ? (
               <section className="card materialsCard materialsHistory">
-                <h2>Local export history</h2>
-                {viewState.historyEvents.length === 0 ? <p className="materialsNotice">No previous exports for this MDC.</p> : (
+                <h2>Actividade</h2>
+                {excelHistoryEvents.length === 0 ? <p className="materialsNotice">Não existem exportações anteriores para este MDC.</p> : (
                   <ul>
-                    {viewState.historyEvents.map((event, index) => (
-                      <li key={`${event.format}-${event.exportedAt}-${index}`}>{event.format.toUpperCase()} — {formatExportedAt(event.exportedAt)}</li>
+                    {excelHistoryEvents.map((event, index) => (
+                      <li key={`${event.format}-${event.exportedAt}-${index}`}>Formato: {event.format.toUpperCase()}{" — "}Exportado em: {formatExportedAt(event.exportedAt)}</li>
                     ))}
                   </ul>
                 )}
@@ -241,10 +228,11 @@ export default function MaterialsTool() {
 
       {hasResult && !isBlocked ? (
         <section className="materialsPrintOnly">
-          <h1>Materials Total</h1>
+          <h1>Total de materiais</h1>
           <p><strong>MDC:</strong> {result.input.normalizedMdc}</p>
+          <p><strong>PHC do equipamento:</strong> {result.phc.reference ?? "Referência PHC não encontrada"}</p>
           <table>
-            <thead><tr><th>Material PHC</th><th>Description</th><th>Quantity</th></tr></thead>
+            <thead><tr><th>PHC do material</th><th>Descrição</th><th>Quantidade</th></tr></thead>
             <tbody>
               {viewState.totalRows.map((row, index) => (
                 <tr key={`${row.materialIdentity}-${index}`}><td>{row.materialPhc || "-"}</td><td>{row.description}</td><td>{row.quantity}</td></tr>

@@ -18,8 +18,8 @@ test("MaterialsTool wires the fresh Excel workflow and removes the schema gate",
   assert.match(source, /canExportExcel: viewState\.canExportExcel/);
   assert.match(source, /filename: materialsExcelFilename\(normalizedMdc\)/);
   assert.match(source, /onClick=\{exportExcel\} disabled=\{!viewState\.canExportExcel\}/);
-  assert.match(source, />\s*Export Excel/);
+  assert.match(source, />\s*Guardar Excel/);
   assert.doesNotMatch(source, /Client PHC import schema required before Excel export is available\./);
-  assert.match(source, /async function exportPdf\(\)/);
-  assert.match(source, /format: "pdf"/);
+  assert.match(source, /historyStore,/);
+  assert.match(source, /confirm: \(\) => window\.confirm\(/);
 });

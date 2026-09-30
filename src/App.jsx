@@ -479,6 +479,12 @@ export default function App() {
   const [copyMsg, setCopyMsg] = useState("");
   const [loadError, setLoadError] = useState("");
 
+  useEffect(() => {
+    document.title = workspace === "materials"
+      ? "Ferramenta MDC - Materiais"
+      : "Ferramenta MDC - Selector";
+  }, [workspace]);
+
   const question1 = QUESTION_DEFS.slice(0, 1);
   const questions2to5 = QUESTION_DEFS.slice(1, 5);
   const questions6to8 = QUESTION_DEFS.slice(5, 8);
@@ -839,33 +845,30 @@ export default function App() {
 
   return (
     <main className="page">
-      <nav className="workspaceSwitch screenOnly" aria-label="Workspace">
-        <button
-          className={workspace === "selector" ? "active" : ""}
-          type="button"
-          onClick={() => setWorkspace("selector")}
-        >
-          Selector
-        </button>
-        <button
-          className={workspace === "materials" ? "active" : ""}
-          type="button"
-          onClick={() => setWorkspace("materials")}
-        >
-          Materials
-        </button>
-      </nav>
+      <section className="card headerCard workspaceHeader screenOnly">
+        <h1>Ferramenta MdC</h1>
+        <nav className="workspaceSwitch screenOnly" aria-label="Workspace">
+          <button
+            className={workspace === "selector" ? "active" : ""}
+            type="button"
+            aria-current={workspace === "selector" ? "page" : undefined}
+            onClick={() => setWorkspace("selector")}
+          >
+            Selector
+          </button>
+          <img className="headerLogo" src={logo} alt="Logo iS2" />
+          <button
+            className={workspace === "materials" ? "active" : ""}
+            type="button"
+            aria-current={workspace === "materials" ? "page" : undefined}
+            onClick={() => setWorkspace("materials")}
+          >
+            Materiais
+          </button>
+        </nav>
+      </section>
       {workspace === "materials" ? <MaterialsTool /> : <>
       <div className="screenOnly">
-        <section className="card headerCard">
-          <div className="headerRow">
-            <div>
-              <h1>Selecionador do modelo de MDC</h1>
-            </div>
-            <img className="headerLogo" src={logo} alt="Logo" />
-          </div>
-        </section>
-
         <div className="cardsRow">
           <section className="card questionCard">
             <h2>Modelo</h2>
