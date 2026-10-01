@@ -37,28 +37,27 @@ async function readSheetRows(bytes) {
   };
 }
 
-test("creates a parseable Materials Total workbook from consolidated rows only", async () => {
+test("creates an exact three-column Materials Total workbook from consolidated rows", async () => {
   const bytes = createBomExcelWorkbook(COMPLETE_MODEL);
   const { workbook, worksheet, rows } = await readSheetRows(bytes);
 
   assert.deepEqual(workbook.SheetNames, ["Materials Total"]);
   assert.ok(worksheet);
   assert.deepEqual(rows, [
-    ["Normalized MDC", "MDC_iS.CP10_M1Xx_AF"],
-    ["Equipment PHC", "PHC-001"],
-    ["BOM Status", "complete"],
-    [],
-    ["Material PHC", "Description", "Total Qty"],
+    ["Material PHC", "Description", "Quantity"],
     ["MAT-CORE", "Material núcleo", 2],
     ["MAT-ALWAYS", "Abraçadeira", 0.5]
   ]);
-  assert.equal(worksheet.C6.t, "n");
-  assert.equal(worksheet.C7.t, "n");
+  assert.equal(worksheet["!ref"], "A1:C3");
+  assert.equal(worksheet.C2.t, "n");
+  assert.equal(worksheet.C3.t, "n");
+  assert.equal(rows.every((row) => row.length === 3), true);
+  assert.equal(rows.flat().some((cell) => /MDC|Equipment PHC|BOM Status|Issues|Warnings/i.test(String(cell))), false);
   assert.equal(rows.flat().includes("CP10"), false);
   assert.equal(rows.filter((row) => row[0] === "MAT-CORE").length, 1);
 });
 
-test("preserves a blank material PHC and incomplete context in the workbook", async () => {
+test("preserves a blank material PHC in the exact three-column workbook", async () => {
   const bytes = createBomExcelWorkbook({
     ...COMPLETE_MODEL,
     phcReference: null,
@@ -76,21 +75,18 @@ test("preserves a blank material PHC and incomplete context in the workbook", as
   const { worksheet, rows } = await readSheetRows(bytes);
 
   assert.deepEqual(rows, [
-    ["Normalized MDC", "MDC_iS.CP10_M1Xx_AF"],
-    ["Equipment PHC", "PHC reference not found"],
-    ["BOM Status", "incomplete"],
-    ["Issues / Warnings"],
-    ["PHC reference not found"],
-    ["AQ — no material mapping defined"],
-    ["Material português — material PHC not found"],
-    [],
-    ["Material PHC", "Description", "Total Qty"],
+    ["Material PHC", "Description", "Quantity"],
     ["", "Tubo de ligação", 1.25],
     ["MAT-2", "Válvula de pressão", 3]
   ]);
-  assert.equal(worksheet.A10.v, "");
-  assert.equal(worksheet.C10.t, "n");
-  assert.equal(worksheet.C11.t, "n");
+  assert.equal(worksheet["!ref"], "A1:C3");
+  assert.equal(worksheet.A2.v, "");
+  assert.equal(worksheet.B2.v, "Tubo de ligação");
+  assert.equal(worksheet.C2.v, 1.25);
+  assert.equal(worksheet.C2.t, "n");
+  assert.equal(worksheet.C3.t, "n");
+  assert.equal(rows.every((row) => row.length === 3), true);
+  assert.equal(rows.flat().some((cell) => /MDC|PHC reference not found|incomplete|Issues|Warnings/i.test(String(cell))), false);
 });
 
 test("saves the generated workbook through the supplied browser download boundary", async () => {

@@ -3,25 +3,10 @@ import * as XLSX from "xlsx";
 const XLSX_MIME_TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 
 function workbookRows(model) {
-  const rows = [
-    ["Normalized MDC", model.normalizedMdc],
-    ["Equipment PHC", model.phcReference ?? "PHC reference not found"],
-    ["BOM Status", model.state]
+  return [
+    ["Material PHC", "Description", "Quantity"],
+    ...model.rows.map(({ materialPhc, description, quantity }) => [materialPhc, description, quantity])
   ];
-
-  if (model.issues.length > 0) {
-    rows.push(["Issues / Warnings"]);
-    for (const issue of model.issues) {
-      rows.push([issue.message]);
-    }
-  }
-
-  rows.push([], ["Material PHC", "Description", "Total Qty"]);
-  for (const row of model.rows) {
-    rows.push([row.materialPhc, row.description, row.quantity]);
-  }
-
-  return rows;
 }
 
 function downloadWorkbook(bytes, filename) {
