@@ -5,7 +5,7 @@ import test from "node:test";
 import { fileURLToPath } from "node:url";
 
 const testDir = path.dirname(fileURLToPath(import.meta.url));
-const appPath = path.resolve(testDir, "..", "src", "App.jsx");
+const appPath = path.resolve(testDir, "..", "src", "SelectorApp.jsx");
 
 function functionSource(source, functionName) {
   const start = source.indexOf(`function ${functionName}(`);
@@ -230,7 +230,7 @@ test("candidate matcher accepts formatted probe-options properties", () => {
   assert.equal(candidateCallContractMatches(formattedSource), true);
 });
 
-test("App PHC candidates pass all enumerated probe selections to assembly construction", async () => {
+test("Selector PHC candidates pass all enumerated probe selections to assembly construction", async () => {
   const appSource = await fs.readFile(appPath, "utf8");
   const candidateSource = functionSource(appSource, "buildUniqueAssemblyCodes");
 

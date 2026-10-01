@@ -6,15 +6,17 @@ import { fileURLToPath } from "node:url";
 
 const testDir = path.dirname(fileURLToPath(import.meta.url));
 const materialsToolPath = path.resolve(testDir, "..", "src", "MaterialsTool.jsx");
-const appPath = path.resolve(testDir, "..", "src", "App.jsx");
+const materialsAppPath = path.resolve(testDir, "..", "src", "MaterialsApp.jsx");
 
 test("Materials workspace presents its user-facing copy in Portuguese", async () => {
-  const [materialsSource, appSource] = await Promise.all([
+  const [materialsSource, materialsAppSource] = await Promise.all([
     fs.readFile(materialsToolPath, "utf8"),
-    fs.readFile(appPath, "utf8")
+    fs.readFile(materialsAppPath, "utf8")
   ]);
 
-  assert.match(appSource, /onClick=\{\(\) => setWorkspace\("materials"\)\}[\s\S]*?>\s*Materiais/);
+  assert.match(materialsAppSource, /import MaterialsTool from "\.\/MaterialsTool\.jsx"/);
+  assert.match(materialsAppSource, /<ToolHeader title="Ferramenta MdC"\s*\/>/);
+  assert.match(materialsAppSource, /document\.title\s*=\s*"Ferramenta MDC - Materiais"/);
   assert.match(materialsSource, /<h1>Modelo MdC<\/h1>/);
   assert.match(materialsSource, />\s*Mostrar Materiais/);
   assert.match(materialsSource, /<h2>Processamento<\/h2>/);

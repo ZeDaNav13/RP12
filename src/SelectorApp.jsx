@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import releaseVersion from "../release-version.json";
-import logo from "./assets/Logo_iS2-removebg-preview.png";
 import printLogo from "./assets/iS2 Logo Fundo Branco.png";
-import MaterialsTool from "./MaterialsTool.jsx";
+import ToolHeader from "./shared/ToolHeader.jsx";
+import { useStyleguide } from "./shared/styleguide.js";
 import { isChlorineRowCompatible, OPEN_COOLING_WATER_TYPES } from "./domain/compatibility.js";
 import { resolveIs2ModelCode } from "./domain/mdc.js";
 import { buildPumpSegment } from "./domain/pumps.js";
@@ -82,18 +82,6 @@ const BDW_DEF = {
 const MANDATORY_ADDONS_DEF = {
   id: "mandatory_addons",
   csvFile: "mandatory_addons.csv"
-};
-
-const DEFAULT_STYLEGUIDE = {
-  main_dark: "#292929",
-  secondary_dark: "#777777",
-  secondary_white: "#D1D1D1",
-  off_white: "#F0EEE9",
-  main_white: "#FFFFFF",
-  text: "#292929",
-  print_text: "#111111",
-  print_line: "#DDDDDD",
-  print_bg: "#FFFFFF"
 };
 
 const pumpQuestionIds = [
@@ -447,30 +435,7 @@ function money(value) {
   }).format(value);
 }
 
-function applyStyleguide(rawStyleguide) {
-  const styleguide = {
-    ...DEFAULT_STYLEGUIDE,
-    ...(rawStyleguide ?? {})
-  };
-
-  const root = document.documentElement;
-  root.style.setProperty("--main-blue", styleguide.main_dark);
-  root.style.setProperty("--secondary-dark", styleguide.secondary_dark);
-  root.style.setProperty("--secondary-white", styleguide.secondary_white);
-  root.style.setProperty("--white", styleguide.off_white);
-  root.style.setProperty("--main-white", styleguide.main_white);
-  root.style.setProperty("--text-color", styleguide.text);
-  root.style.setProperty("--print-text", styleguide.print_text);
-  root.style.setProperty("--print-line", styleguide.print_line);
-  root.style.setProperty("--print-bg", styleguide.print_bg);
-
-  const encodedArrowColor = styleguide.secondary_dark.replace("#", "%23");
-  const arrowSvg = `url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='${encodedArrowColor}' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E\")`;
-  root.style.setProperty("--select-arrow-icon", arrowSvg);
-}
-
-export default function App() {
-  const [workspace, setWorkspace] = useState("selector");
+export default function SelectorApp() {
   const [questionRows, setQuestionRows] = useState({});
   const [answers, setAnswers] = useState(buildEmptyAnswers);
   const [circuito, setCircuito] = useState("");
@@ -480,44 +445,14 @@ export default function App() {
   const [loadError, setLoadError] = useState("");
 
   useEffect(() => {
-    document.title = workspace === "materials"
-      ? "Ferramenta MDC - Materiais"
-      : "Ferramenta MDC - Selector";
-  }, [workspace]);
+    document.title = "Ferramenta MDC - Selector";
+  }, []);
+
+  useStyleguide();
 
   const question1 = QUESTION_DEFS.slice(0, 1);
   const questions2to5 = QUESTION_DEFS.slice(1, 5);
   const questions6to8 = QUESTION_DEFS.slice(5, 8);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function loadStyleguide() {
-      try {
-        const response = await fetch(`${import.meta.env.BASE_URL}styleguide.json`, {
-          cache: "no-store"
-        });
-        if (!response.ok) {
-          applyStyleguide(DEFAULT_STYLEGUIDE);
-          return;
-        }
-        const loadedStyleguide = await response.json();
-        if (!cancelled) {
-          applyStyleguide(loadedStyleguide);
-        }
-      } catch {
-        if (!cancelled) {
-          applyStyleguide(DEFAULT_STYLEGUIDE);
-        }
-      }
-    }
-
-    loadStyleguide();
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -845,29 +780,7 @@ export default function App() {
 
   return (
     <main className="page">
-      <section className="card headerCard workspaceHeader screenOnly">
-        <h1>Ferramenta MdC</h1>
-        <nav className="workspaceSwitch screenOnly" aria-label="Workspace">
-          <button
-            className={workspace === "selector" ? "active" : ""}
-            type="button"
-            aria-current={workspace === "selector" ? "page" : undefined}
-            onClick={() => setWorkspace("selector")}
-          >
-            Selector
-          </button>
-          <img className="headerLogo" src={logo} alt="Logo iS2" />
-          <button
-            className={workspace === "materials" ? "active" : ""}
-            type="button"
-            aria-current={workspace === "materials" ? "page" : undefined}
-            onClick={() => setWorkspace("materials")}
-          >
-            Materiais
-          </button>
-        </nav>
-      </section>
-      {workspace === "materials" ? <MaterialsTool /> : <>
+      <ToolHeader title="Ferramenta MdC" />
       <div className="screenOnly">
         <div className="cardsRow">
           <section className="card questionCard">
@@ -1169,7 +1082,6 @@ export default function App() {
         ) : null}
 
       </section>
-      </>}
     </main>
   );
 }
