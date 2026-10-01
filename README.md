@@ -9,9 +9,10 @@ Static Vite + React configurator used to assemble RP12 budgets, generate the on-
 - `public/styleguide.json` - client-adjustable color tokens
 - `release-version.json` - single source of truth for the shipped app version tag
 - `scripts/generate-combinations.mjs` - rebuilds `all_reply_combinations_filtered.csv`
-- `scripts/prepare-client-release.mjs` - assembles the upload-ready client package
-- `release/mdc_tool/` - generated folder for server upload
-- `mdc_tool_ready_to_upload.zip` - generated zip for client delivery
+- `scripts/prepare-client-release.mjs` - assembles the independent upload-ready client packages
+- `release/selector/` - generated Selector folder for server upload
+- `release/lista_materiais/` - generated LDM folder for server upload
+- `selector_ready_to_upload.zip` and `lista_materiais_ready_to_upload.zip` - generated delivery ZIPs
 
 ## Requirements
 
@@ -22,7 +23,8 @@ Static Vite + React configurator used to assemble RP12 budgets, generate the on-
 
 ```bash
 npm install
-npm run dev
+npm run dev:selector
+npm run dev:ldm
 ```
 
 The default dev URL is the Vite local server.
@@ -30,9 +32,11 @@ The default dev URL is the Vite local server.
 ## Main commands
 
 ```bash
-npm run dev
+npm run dev:selector
+npm run dev:ldm
 npm run build
-npm run build:client
+npm run build:selector
+npm run build:ldm
 npm run generate:combinations
 npm run release:prepare
 npm run release:client
@@ -48,11 +52,11 @@ npm run release:client
 
 That command:
 
-1. Builds the app with base path `/mdc_tool/`
-2. Rebuilds `release/mdc_tool/`
-3. Copies the current client-facing docs and editable data files
-4. Refreshes `mdc_tool_ready_to_upload.zip`
-5. Creates the versioned client zip from `release-version.json` (example: `mdc_tool_ready_to_upload_v1.5.zip`)
+1. Builds independent Selector and LDM applications with base paths `/selector/` and `/lista_materiais/`
+2. Rebuilds `release/selector/` and `release/lista_materiais/`
+3. Copies only each application's runtime files and its own client instructions
+4. Refreshes `selector_ready_to_upload.zip` and `lista_materiais_ready_to_upload.zip`
+5. Creates versioned ZIPs from `release-version.json` (for example, `selector_ready_to_upload_v1.6.zip` and `lista_materiais_ready_to_upload_v1.6.zip`)
 
 ## Session Close-Out
 
@@ -62,7 +66,7 @@ Use this procedure at the end of a work session you intend to ship:
 2. Update `CHANGELOG.md`
 3. Run `npm run release:client`
 4. Commit and push the repo to GitHub
-5. Send the versioned zip file created by the release command
+5. Send the two versioned ZIPs created by the release command
 
 ## Editable client data
 
@@ -82,7 +86,7 @@ Then rebuild the release package.
 
 ## Materials BOM
 
-The default workspace remains the **Selector**. The separate **Materials** workspace is for a manual MDC calculation and does not use selector pricing or change selector state.
+The **Selector** and **LDM — Lista de Materiais** are independently deployed applications. The LDM tool is for a manual MDC calculation and does not use Selector pricing or change Selector state.
 
 - Enter an MDC reference and select **Calculate BOM**. A malformed MDC blocks calculation and produces no material rows.
 - A missing equipment PHC is shown as `PHC reference not found`. Unmapped technical components produce an incomplete BOM with its existing issues displayed.
@@ -96,7 +100,9 @@ The Materials Excel export is a technical materials-list workbook, not a PHC imp
 
 ## Supporting docs
 
-- `README_for_client.txt` - non-technical upload/update guide
+- `README_selector_for_client.txt` - Selector upload/update guide
+- `README_lista_materiais_for_client.txt` - LDM upload/update guide
+- `README_for_client.txt` - overview of the two independent packages
 - `DEPLOY.md` - deployment and packaging notes
 - `CHANGELOG.md` - release history
 - `public/questions/README.md` - CSV structure and rules

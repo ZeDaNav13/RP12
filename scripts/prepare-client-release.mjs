@@ -7,27 +7,79 @@ import { fileURLToPath } from "node:url";
 const execFileAsync = promisify(execFile);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(__dirname, "..");
-const distDir = path.join(rootDir, "dist");
-const releaseRootDir = path.join(rootDir, "release");
-const releaseDir = path.join(releaseRootDir, "mdc_tool");
-const zipFile = path.join(rootDir, "mdc_tool_ready_to_upload.zip");
 const versionFile = path.join(rootDir, "release-version.json");
 
-const filesToCopy = [
-  "README_for_client.txt",
-  "phc_integration.csv",
-  "all_reply_combinations_filtered.csv"
+const apps = {
+  selector: {
+    distDirectory: "selector",
+    releaseDirectory: "selector",
+    clientReadme: "README_selector_for_client.txt",
+    runtimeEntries: [
+      { source: "public/fonts", target: "fonts", type: "directory" },
+      { source: "public/styleguide.json", target: "styleguide.json", type: "file" },
+      { source: "public/questions", target: "questions", type: "directory" }
+    ]
+  },
+  ldm: {
+    distDirectory: "lista_materiais",
+    releaseDirectory: "lista_materiais",
+    clientReadme: "README_lista_materiais_for_client.txt",
+    runtimeEntries: [
+      { source: "public/fonts", target: "fonts", type: "directory" },
+      { source: "public/styleguide.json", target: "styleguide.json", type: "file" },
+      {
+        source: "public/materials/materials_matrix.csv",
+        target: "materials/materials_matrix.csv",
+        type: "file"
+      },
+      { source: "phc_integration.csv", target: "phc_integration.csv", type: "file" }
+    ]
+  }
+};
+
+const compiledEntries = [
+  { source: "index.html", target: "index.html", type: "file" },
+  { source: "assets", target: "assets", type: "directory" },
+  { source: "favicon.png", target: "favicon.png", type: "file" },
+  { source: "favicon-32x32.png", target: "favicon-32x32.png", type: "file" },
+  { source: "apple-touch-icon.png", target: "apple-touch-icon.png", type: "file" }
 ];
 
-const directoriesToCopy = [
-  { source: "public/questions", target: "questions" },
-  { source: "public/fonts", target: "fonts" },
-  { source: "public/materials", target: "materials" }
-];
+function parseArguments(argumentsList) {
+  const options = { appName: null, createZip: false, releaseRoot: path.join(rootDir, "release") };
 
-const standaloneFilesToCopy = [
-  { source: "public/styleguide.json", target: "styleguide.json" }
-];
+  for (let index = 0; index < argumentsList.length; index += 1) {
+    const argument = argumentsList[index];
+
+    if (argument === "--zip") {
+      options.createZip = true;
+      continue;
+    }
+
+    if (argument === "--app" || argument === "--release-root") {
+      const value = argumentsList[index + 1];
+      if (!value || value.startsWith("--")) {
+        throw new Error(`Missing value for ${argument}.`);
+      }
+
+      if (argument === "--app") {
+        options.appName = value;
+      } else {
+        options.releaseRoot = path.resolve(value);
+      }
+      index += 1;
+      continue;
+    }
+
+    throw new Error(`Unknown argument: ${argument}`);
+  }
+
+  if (options.appName && !apps[options.appName]) {
+    throw new Error("Invalid --app value. Expected selector or ldm.");
+  }
+
+  return options;
+}
 
 async function assertPathExists(targetPath, message) {
   try {
@@ -37,62 +89,94 @@ async function assertPathExists(targetPath, message) {
   }
 }
 
-async function main() {
+async function copyEntry(sourceRoot, destinationRoot, entry) {
+  const sourcePath = path.join(sourceRoot, entry.source);
+  const targetPath = path.join(destinationRoot, entry.target);
+
+  await assertPathExists(sourcePath, `Missing required release file: ${sourcePath}`);
+  await fs.mkdir(path.dirname(targetPath), { recursive: true });
+
+  if (entry.type === "directory") {
+    await fs.cp(sourcePath, targetPath, { recursive: true });
+  } else {
+    await fs.copyFile(sourcePath, targetPath);
+  }
+}
+
+async function preparePackage(appName, releaseRoot) {
+  const app = apps[appName];
+  const distRoot = path.join(rootDir, "dist", app.distDirectory);
+  const packageRoot = path.join(releaseRoot, app.releaseDirectory);
+
   await assertPathExists(
-    distDir,
-    "Missing dist/. Run `npm run build:client` or `npm run release:prepare` after a successful build."
+    distRoot,
+    `Missing dist/${app.distDirectory}/. Run npm run build:${appName} or npm run build first.`
   );
 
-  await fs.rm(releaseDir, { recursive: true, force: true });
-  await fs.mkdir(releaseRootDir, { recursive: true });
-  await fs.cp(distDir, releaseDir, { recursive: true });
+  await fs.rm(packageRoot, { recursive: true, force: true });
+  await fs.mkdir(packageRoot, { recursive: true });
 
-  for (const file of filesToCopy) {
-    await fs.copyFile(path.join(rootDir, file), path.join(releaseDir, path.basename(file)));
+  for (const entry of compiledEntries) {
+    await copyEntry(distRoot, packageRoot, entry);
   }
 
-  for (const entry of standaloneFilesToCopy) {
-    await fs.copyFile(path.join(rootDir, entry.source), path.join(releaseDir, entry.target));
+  for (const entry of app.runtimeEntries) {
+    await copyEntry(rootDir, packageRoot, entry);
   }
 
-  for (const entry of directoriesToCopy) {
-    await fs.cp(path.join(rootDir, entry.source), path.join(releaseDir, entry.target), {
-      recursive: true
-    });
-  }
-
-  if (process.argv.includes("--zip")) {
-    await createZip();
-  }
+  await copyEntry(rootDir, packageRoot, {
+    source: app.clientReadme,
+    target: app.clientReadme,
+    type: "file"
+  });
 }
 
-async function createZip() {
-  const versionedZipFile = await getVersionedZipFile();
-  try {
-    await execFileAsync(
-      "zip",
-      ["-r", "-q", "-FS", zipFile, "mdc_tool"],
-      { cwd: releaseRootDir }
-    );
-    await fs.copyFile(zipFile, versionedZipFile);
-  } catch (error) {
-    if (error.code === "ENOENT") {
-      throw new Error("The `zip` command is not available on this machine.");
-    }
-    throw error;
-  }
-}
-
-async function getVersionedZipFile() {
+async function getVersion() {
   const contents = await fs.readFile(versionFile, "utf8");
   const config = JSON.parse(contents);
   const version = String(config.version ?? "").trim();
 
   if (!/^v\d+(?:\.\d+)*$/.test(version)) {
-    throw new Error("Invalid version in release-version.json. Expected format like `v1.5`.");
+    throw new Error("Invalid version in release-version.json. Expected format like v1.5.");
   }
 
-  return path.join(rootDir, `mdc_tool_ready_to_upload_${version}.zip`);
+  return version;
+}
+
+async function createZip(appName, releaseRoot, version) {
+  const app = apps[appName];
+  const genericZip = path.join(rootDir, `${app.releaseDirectory}_ready_to_upload.zip`);
+  const versionedZip = path.join(rootDir, `${app.releaseDirectory}_ready_to_upload_${version}.zip`);
+
+  try {
+    await execFileAsync(
+      "zip",
+      ["-r", "-q", "-FS", genericZip, app.releaseDirectory],
+      { cwd: releaseRoot }
+    );
+    await fs.copyFile(genericZip, versionedZip);
+  } catch (error) {
+    if (error.code === "ENOENT") {
+      throw new Error("The zip command is not available on this machine.");
+    }
+    throw error;
+  }
+}
+
+async function main() {
+  const options = parseArguments(process.argv.slice(2));
+  const appNames = options.appName ? [options.appName] : Object.keys(apps);
+
+  for (const appName of appNames) {
+    await preparePackage(appName, options.releaseRoot);
+  }
+
+  if (options.createZip) {
+    const version = await getVersion();
+    for (const appName of appNames) {
+      await createZip(appName, options.releaseRoot, version);
+    }
+  }
 }
 
 main().catch((error) => {

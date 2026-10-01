@@ -13,8 +13,8 @@
     "build": "npm run build:selector && npm run build:ldm",
     "generate:combinations": "node scripts/generate-combinations.mjs",
     "preview": "vite preview",
-    "release:prepare": "npm run generate:combinations && npm run build:client && node scripts/prepare-client-release.mjs",
-    "release:client": "npm run generate:combinations && npm run build:client && node scripts/prepare-client-release.mjs --zip"
+    "release:prepare": "npm run generate:combinations && npm run build && node scripts/prepare-client-release.mjs",
+    "release:client": "npm run generate:combinations && npm run build && node scripts/prepare-client-release.mjs --zip"
   },
   "dependencies": {
     "jspdf": "^4.2.1",
