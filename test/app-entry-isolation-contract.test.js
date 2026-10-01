@@ -10,8 +10,10 @@ const selectorAppPath = sourcePath("SelectorApp.jsx");
 const materialsAppPath = sourcePath("MaterialsApp.jsx");
 const toolHeaderPath = sourcePath("shared", "ToolHeader.jsx");
 const styleguidePath = sourcePath("shared", "styleguide.js");
-const mainPath = sourcePath("main.jsx");
 const legacyAppPath = sourcePath("App.jsx");
+const selectorEntryPath = path.resolve(testDir, "..", "apps", "selector", "main.jsx");
+const materialsEntryPath = path.resolve(testDir, "..", "apps", "lista_materiais", "main.jsx");
+const legacyIndexPath = path.resolve(testDir, "..", "index.html");
 
 async function readRequired(filePath) {
   await fs.access(filePath);
@@ -23,12 +25,13 @@ function assertDoesNotContain(source, pattern, description) {
 }
 
 test("independent app roots isolate Selector and LDM ownership", async () => {
-  const [selectorSource, materialsSource, headerSource, styleguideSource, mainSource] = await Promise.all([
+  const [selectorSource, materialsSource, headerSource, styleguideSource, selectorEntrySource, materialsEntrySource] = await Promise.all([
     readRequired(selectorAppPath),
     readRequired(materialsAppPath),
     readRequired(toolHeaderPath),
     readRequired(styleguidePath),
-    readRequired(mainPath)
+    readRequired(selectorEntryPath),
+    readRequired(materialsEntryPath)
   ]);
 
   assert.match(selectorSource, /export default function SelectorApp\(/);
@@ -73,18 +76,24 @@ test("independent app roots isolate Selector and LDM ownership", async () => {
     assert.match(styleguideSource, new RegExp(variableName));
   }
 
-  assert.match(mainSource, /import SelectorApp from "\.\/SelectorApp"/);
-  assert.match(mainSource, /<SelectorApp\s*\/>/);
-  assertDoesNotContain(mainSource, /\.\/App|MaterialsApp|MaterialsTool/, "legacy entry must mount SelectorApp only");
+  assert.match(selectorEntrySource, /import SelectorApp from "\.\.\/\.\.\/src\/SelectorApp\.jsx"/);
+  assert.match(selectorEntrySource, /<SelectorApp\s*\/>/);
+  assertDoesNotContain(selectorEntrySource, /MaterialsApp|MaterialsTool/, "Selector entry must mount Selector only");
+  assert.match(materialsEntrySource, /import MaterialsApp from "\.\.\/\.\.\/src\/MaterialsApp\.jsx"/);
+  assert.match(materialsEntrySource, /<MaterialsApp\s*\/>/);
+  assertDoesNotContain(materialsEntrySource, /SelectorApp/, "LDM entry must mount LDM only");
 
   await assert.rejects(fs.access(legacyAppPath), { code: "ENOENT" });
+  await assert.rejects(fs.access(legacyIndexPath), { code: "ENOENT" });
+  await assert.rejects(fs.access(sourcePath("main.jsx")), { code: "ENOENT" });
 
   const routingPattern = /window\.history|history\.pushState|history\.replaceState|location\.assign|location\.replace|location\.href|react-router/i;
   for (const [name, source] of [
     ["SelectorApp", selectorSource],
     ["MaterialsApp", materialsSource],
     ["ToolHeader", headerSource],
-    ["main", mainSource]
+    ["selector entry", selectorEntrySource],
+    ["LDM entry", materialsEntrySource]
   ]) {
     assertDoesNotContain(source, routingPattern, `${name} must not add routing`);
   }
