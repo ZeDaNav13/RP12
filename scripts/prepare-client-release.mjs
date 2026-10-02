@@ -32,6 +32,11 @@ const apps = {
         target: "materials/materials_matrix.csv",
         type: "file"
       },
+      {
+        source: "public/components/components.csv",
+        target: "components/components.csv",
+        type: "file"
+      },
       { source: "phc_integration.csv", target: "phc_integration.csv", type: "file" }
     ]
   }

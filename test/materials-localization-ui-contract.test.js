@@ -15,8 +15,10 @@ test("Materials workspace presents its user-facing copy in Portuguese", async ()
   ]);
 
   assert.match(materialsAppSource, /import MaterialsTool from "\.\/MaterialsTool\.jsx"/);
-  assert.match(materialsAppSource, /<ToolHeader title="Ferramenta MdC"\s*\/>/);
-  assert.match(materialsAppSource, /document\.title\s*=\s*"Ferramenta MDC - Materiais"/);
+  assert.match(materialsAppSource, /const APP_TITLE = "Lista de Materiais MDC";/);
+  assert.match(materialsAppSource, /<ToolHeader title=\{APP_TITLE\}\s*\/>/);
+  assert.match(materialsAppSource, /document\.title\s*=\s*APP_TITLE/);
+  assert.doesNotMatch(materialsAppSource, /Ferramenta MDC/);
   assert.match(materialsSource, /<h1>Modelo MdC<\/h1>/);
   assert.match(materialsSource, />\s*Mostrar Materiais/);
   assert.match(materialsSource, /<h2>Processamento<\/h2>/);

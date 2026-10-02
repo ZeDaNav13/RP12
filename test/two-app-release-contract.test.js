@@ -48,6 +48,7 @@ async function createPackagerWorkspace() {
   await writeFixtureFile(workspace, "public/questions/model.csv", "option\nCP10\n");
   await writeFixtureFile(workspace, "public/fonts/font.woff2", "font");
   await writeFixtureFile(workspace, "public/materials/materials_matrix.csv", "material_phc\n");
+  await writeFixtureFile(workspace, "public/components/components.csv", "component_code,component_phc\n");
 
   for (const app of ["selector", "lista_materiais"]) {
     await writeFixtureFile(workspace, `dist/${app}/index.html`, `<title>${app}</title>`);
@@ -111,6 +112,7 @@ test("packager creates isolated package manifests and delivery ZIPs", async (tes
     "lista_materiais/README_lista_materiais_for_client.txt",
     "lista_materiais/apple-touch-icon.png",
     "lista_materiais/assets/app.js",
+    "lista_materiais/components/components.csv",
     "lista_materiais/favicon-32x32.png",
     "lista_materiais/favicon.png",
     "lista_materiais/fonts/font.woff2",
@@ -132,10 +134,12 @@ test("packager creates isolated package manifests and delivery ZIPs", async (tes
     assert.ok(!zipEntries.some((entry) => entry.includes("all_reply_combinations_filtered.csv")), zipName);
 
     if (zipName.startsWith("selector_")) {
+      assert.ok(!zipEntries.some((entry) => entry.includes("components/")), zipName);
       assert.ok(!zipEntries.some((entry) => entry.includes("materials/")), zipName);
       assert.ok(!zipEntries.some((entry) => entry.includes("phc_integration.csv")), zipName);
       assert.ok(!zipEntries.some((entry) => entry.includes("README_lista_materiais")), zipName);
     } else {
+      assert.ok(zipEntries.includes("lista_materiais/components/components.csv"), zipName);
       assert.ok(!zipEntries.some((entry) => entry.includes("questions/")), zipName);
       assert.ok(!zipEntries.some((entry) => entry.includes("README_selector")), zipName);
     }

@@ -35,7 +35,10 @@ test("independent app roots isolate Selector and LDM ownership", async () => {
   ]);
 
   assert.match(selectorSource, /export default function SelectorApp\(/);
-  assert.match(selectorSource, /document\.title\s*=\s*"Ferramenta MDC - Selector"/);
+  assert.match(selectorSource, /const APP_TITLE = "Selector MDC";/);
+  assert.match(selectorSource, /document\.title\s*=\s*APP_TITLE/);
+  assert.match(selectorSource, /<ToolHeader title=\{APP_TITLE\}\s*\/>/);
+  assertDoesNotContain(selectorSource, /Ferramenta MDC/, "Selector title must not retain the former combined-app name");
   assert.match(selectorSource, /const QUESTION_DEFS = \[/);
   assert.match(selectorSource, /function buildUniqueAssemblyCodes\(/);
   assert.match(selectorSource, /import \{ useStyleguide \} from "\.\/shared\/styleguide\.js"/);
@@ -45,7 +48,10 @@ test("independent app roots isolate Selector and LDM ownership", async () => {
   assertDoesNotContain(selectorSource, /DEFAULT_STYLEGUIDE|function applyStyleguide|function loadStyleguide|styleguide\.json/, "Selector must not duplicate styleguide loading");
 
   assert.match(materialsSource, /import MaterialsTool from "\.\/MaterialsTool\.jsx"/);
-  assert.match(materialsSource, /document\.title\s*=\s*"Ferramenta MDC - Materiais"/);
+  assert.match(materialsSource, /const APP_TITLE = "Lista de Materiais MDC";/);
+  assert.match(materialsSource, /document\.title\s*=\s*APP_TITLE/);
+  assert.match(materialsSource, /<ToolHeader title=\{APP_TITLE\}\s*\/>/);
+  assertDoesNotContain(materialsSource, /Ferramenta MDC/, "LDM title must not retain the former combined-app name");
   assert.match(materialsSource, /<MaterialsTool\s*\/>/);
   assert.match(materialsSource, /import \{ useStyleguide \} from "\.\/shared\/styleguide\.js"/);
   assert.match(materialsSource, /useStyleguide\(\);/);

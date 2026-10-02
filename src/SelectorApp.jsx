@@ -98,6 +98,7 @@ const PHC_REFERENCE_START = 1n;
 const PHC_REFERENCE_WIDTH = 11;
 const EMPTY_OPTION = "";
 const APP_VERSION = releaseVersion.version;
+const APP_TITLE = "Selector MDC";
 
 function phcReferenceForIndex(index) {
   const number = PHC_REFERENCE_START + BigInt(index);
@@ -445,7 +446,7 @@ export default function SelectorApp() {
   const [loadError, setLoadError] = useState("");
 
   useEffect(() => {
-    document.title = "Ferramenta MDC - Selector";
+    document.title = APP_TITLE;
   }, []);
 
   useStyleguide();
@@ -780,7 +781,7 @@ export default function SelectorApp() {
 
   return (
     <main className="page">
-      <ToolHeader title="Ferramenta MdC" />
+      <ToolHeader title={APP_TITLE} />
       <div className="screenOnly">
         <div className="cardsRow">
           <section className="card questionCard">

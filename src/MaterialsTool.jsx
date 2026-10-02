@@ -164,11 +164,11 @@ export default function MaterialsTool() {
                   <h2>Materiais por Componente</h2>
                   <div className="tableWrap">
                     <table>
-                      <thead><tr><th>Componente</th><th>PHC do material</th><th>Descrição</th><th>Quantidade</th></tr></thead>
+                      <thead><tr><th>PHC</th><th>Componente</th><th>PHC do material</th><th>Descrição</th><th>Quantidade</th></tr></thead>
                       <tbody>
                         {viewState.componentRows.map((row, index) => (
                           <tr key={`${row.sourceComponent}-${row.matrixRowId}-${index}`}>
-                            <td>{row.sourceComponent}</td><td>{row.materialPhc || "-"}</td><td>{row.description}</td><td>{row.quantity}</td>
+                            <td></td><td>{row.sourceComponent}</td><td>{row.materialPhc}</td><td>{row.description}</td><td>{row.quantity}</td>
                           </tr>
                         ))}
                       </tbody>
