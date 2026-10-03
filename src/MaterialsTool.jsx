@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { calculateBom } from "./domain/bom.js";
 import { exportBomExcel, materialsExcelFilename } from "./domain/bom-excel-workflow.js";
@@ -16,6 +16,8 @@ export default function MaterialsTool() {
   const [result, setResult] = useState(null);
   const [historyEvents, setHistoryEvents] = useState([]);
   const [exportMessage, setExportMessage] = useState("");
+  const [validationMessage, setValidationMessage] = useState("");
+  const inputRef = useRef(null);
 
   const historyStore = useMemo(
     () => createBomHistoryStore({
@@ -65,6 +67,13 @@ export default function MaterialsTool() {
   );
   const excelHistoryEvents = viewState.historyEvents.filter((event) => event.format === "excel");
 
+  function resetCalculatedView() {
+    setResult(null);
+    setHistoryEvents([]);
+    setExportMessage("");
+    setValidationMessage("");
+  }
+
   function calculate() {
     if (runtimeData.status !== "ready") return;
 
@@ -73,13 +82,31 @@ export default function MaterialsTool() {
       matrixCsvText: runtimeData.matrixCsvText,
       phcCsvText: runtimeData.phcCsvText
     });
+    if (nextResult.state === "blocked") {
+      resetCalculatedView();
+      setValidationMessage(
+        nextResult.issues.some((issue) => issue.kind === "phc_not_found")
+          ? "Referência MDC não reconhecida: PHC do equipamento não encontrado."
+          : "Não foi possível calcular os materiais para esta referência MDC."
+      );
+      return;
+    }
+
     setResult(nextResult);
     setExportMessage("");
-    setHistoryEvents(
-      nextResult.state === "blocked"
-        ? []
-        : historyStore.eventsFor(nextResult.input.normalizedMdc)
-    );
+    setValidationMessage("");
+    setHistoryEvents(historyStore.eventsFor(nextResult.input.normalizedMdc));
+  }
+
+  function editCalculatedReference() {
+    resetCalculatedView();
+    inputRef.current?.focus();
+  }
+
+  function clearCalculatedReference() {
+    resetCalculatedView();
+    setRawMdc("");
+    inputRef.current?.focus();
   }
 
   function printMaterials() {
@@ -109,7 +136,7 @@ export default function MaterialsTool() {
   }
 
   const hasResult = result !== null;
-  const isBlocked = result?.state === "blocked";
+  const hasUsableResult = result !== null && result.state !== "blocked";
 
   return (
     <>
@@ -120,9 +147,11 @@ export default function MaterialsTool() {
             <label className="materialsField">
               <span>Referência MDC</span>
               <input
+                ref={inputRef}
                 value={rawMdc}
                 onChange={(event) => setRawMdc(event.target.value)}
                 placeholder="colocar referência MDC aqui"
+                readOnly={hasUsableResult}
               />
             </label>
             <button
@@ -133,9 +162,16 @@ export default function MaterialsTool() {
             >
               Mostrar Materiais
             </button>
+            {hasUsableResult ? (
+              <>
+                <button type="button" onClick={editCalculatedReference}>Editar</button>
+                <button type="button" onClick={clearCalculatedReference}>Limpar</button>
+              </>
+            ) : null}
           </div>
           {runtimeData.status === "loading" ? <p className="materialsNotice">A carregar dados de materiais…</p> : null}
           {runtimeData.status === "error" ? <p className="materialsNotice">Não foi possível carregar os dados de materiais.</p> : null}
+          {validationMessage ? <p className="materialsNotice">{validationMessage}</p> : null}
         </section>
 
         {hasResult ? (
@@ -147,7 +183,6 @@ export default function MaterialsTool() {
                 <div className="summaryRow"><span className="summaryLabel">PHC do equipamento</span><strong className="summaryValue">{result.phc.reference ?? "Referência PHC não encontrada"}</strong></div>
                 <div className="summaryRow"><span className="summaryLabel">Estado</span><strong className="summaryValue">{formatMaterialState(result.state)}</strong></div>
               </div>
-              {viewState.isStale ? <p className="materialsNotice">O resultado está desatualizado. Calcule novamente antes de exportar.</p> : null}
               {result.issues.length > 0 ? (
                 <details className="materialsIssueDetails">
                   <summary>Detalhes</summary>
@@ -158,9 +193,8 @@ export default function MaterialsTool() {
               ) : null}
             </section>
 
-            {!isBlocked ? (
-              <>
-                <section className="card materialsCard materialsComponents">
+            <>
+              <section className="card materialsCard materialsComponents">
                   <h2>Materiais por Componente</h2>
                   <div className="tableWrap">
                     <table>
@@ -174,9 +208,9 @@ export default function MaterialsTool() {
                       </tbody>
                     </table>
                   </div>
-                </section>
+              </section>
 
-                <section className="card materialsCard materialsTotals">
+              <section className="card materialsCard materialsTotals">
                   <h2>Lista Completa</h2>
                   <div className="tableWrap">
                     <table>
@@ -190,9 +224,7 @@ export default function MaterialsTool() {
                       </tbody>
                     </table>
                   </div>
-                </section>
-              </>
-            ) : null}
+              </section>
 
             <section className="materialsExportSection">
               <div className="materialsExportActions">
@@ -210,8 +242,7 @@ export default function MaterialsTool() {
               {exportMessage ? <p className="materialsNotice">{exportMessage}</p> : null}
             </section>
 
-            {!isBlocked ? (
-              <section className="card materialsCard materialsHistory">
+            <section className="card materialsCard materialsHistory">
                 <h2>Actividade</h2>
                 {excelHistoryEvents.length === 0 ? <p className="materialsNotice">Não existem exportações anteriores para este MDC.</p> : (
                   <ul>
@@ -220,13 +251,13 @@ export default function MaterialsTool() {
                     ))}
                   </ul>
                 )}
-              </section>
-            ) : null}
+            </section>
+            </>
           </>
         ) : null}
       </section>
 
-      {hasResult && !isBlocked ? (
+      {hasResult ? (
         <section className="materialsPrintOnly">
           <h1>Total de materiais</h1>
           <p><strong>MDC:</strong> {result.input.normalizedMdc}</p>

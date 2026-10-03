@@ -30,7 +30,11 @@ function completeMatrixCsv({ includeAq = false, blankMaterialPhc = false } = {})
   ]);
 }
 
-function calculate({ rawMdc = COMPLETE_MDC, matrixCsvText = completeMatrixCsv(), phcCsvText = phcCsv() } = {}) {
+function calculate({
+  rawMdc = COMPLETE_MDC,
+  matrixCsvText = completeMatrixCsv(),
+  phcCsvText = phcCsv([{ reference: "PHC-001", assemblyCode: COMPLETE_MDC }])
+} = {}) {
   return calculateBom({ rawMdc, matrixCsvText, phcCsvText });
 }
 
@@ -76,19 +80,26 @@ test("calculateBom returns complete with found PHC and reuses Task 3 material re
   assert.deepEqual(result.exportEligibility, { pdf: true, excel: true });
 });
 
-test("calculateBom keeps a fully mapped PHC-not-found BOM complete and exportable", () => {
-  const result = calculate();
+test("calculateBom blocks a parseable MDC that is absent from the equipment PHC registry", () => {
+  const result = calculate({ phcCsvText: phcCsv() });
 
-  assert.equal(result.state, "complete");
+  assert.equal(result.state, "blocked");
   assert.deepEqual(result.phc, { reference: null, status: "not_found" });
   assert.deepEqual(result.issues, [
-    { severity: "warning", kind: "phc_not_found", message: "PHC reference not found" }
+    { severity: "problem", kind: "phc_not_found", message: "PHC reference not found" }
   ]);
-  assert.deepEqual(result.exportEligibility, { pdf: true, excel: true });
+  assert.deepEqual(result.parsedComponents, []);
+  assert.deepEqual(result.contributions, []);
+  assert.deepEqual(result.materialTotals, []);
+  assert.deepEqual(result.exportEligibility, { pdf: false, excel: false });
 });
 
 test("calculateBom makes an unmapped component incomplete without disabling Excel", () => {
-  const result = calculate({ rawMdc: "MDC_iS.CP10_M1Xx_AQ" });
+  const rawMdc = "MDC_iS.CP10_M1Xx_AQ";
+  const result = calculate({
+    rawMdc,
+    phcCsvText: phcCsv([{ reference: "PHC-001", assemblyCode: rawMdc }])
+  });
 
   assert.equal(result.state, "incomplete");
   assert.equal(result.issues.filter((issue) => issue.kind === "unmapped_component").length, 1);
@@ -126,14 +137,15 @@ test("calculateBom keeps included blank-PHC materials incomplete and Excel-eligi
   assert.deepEqual(result.exportEligibility, { pdf: true, excel: true });
 });
 
-test("calculateBom accumulates mixed non-blocking problems and a PHC warning", () => {
+test("calculateBom accumulates mixed non-blocking material problems with a found equipment PHC", () => {
   const result = calculate({
     rawMdc: "MDC_iS.CP10_M1Xx_AQ",
-    matrixCsvText: completeMatrixCsv({ blankMaterialPhc: true })
+    matrixCsvText: completeMatrixCsv({ blankMaterialPhc: true }),
+    phcCsvText: phcCsv([{ reference: "PHC-001", assemblyCode: "MDC_iS.CP10_M1Xx_AQ" }])
   });
 
   assert.equal(result.state, "incomplete");
-  assert.deepEqual(issueKinds(result), ["phc_not_found", "unmapped_component", "missing_material_phc"]);
+  assert.deepEqual(issueKinds(result), ["unmapped_component", "missing_material_phc"]);
   assert.deepEqual(result.exportEligibility, { pdf: true, excel: true });
 });
 

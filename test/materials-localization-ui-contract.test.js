@@ -34,7 +34,7 @@ test("Materials workspace presents its user-facing copy in Portuguese", async ()
   assert.match(materialsSource, /<h2>Actividade<\/h2>/);
   assert.match(materialsSource, /Não existem exportações anteriores para este MDC\./);
   assert.match(materialsSource, /Formato: \{event\.format\.toUpperCase\(\)\}\{" — "\}Exportado em:/);
-  assert.match(materialsSource, /O resultado está desatualizado\. Calcule novamente antes de exportar\./);
+  assert.doesNotMatch(materialsSource, /O resultado está desatualizado\. Calcule novamente antes de exportar\./);
   assert.match(materialsSource, /formatMaterialIssue\(issue\)/);
   assert.doesNotMatch(materialsSource, /<li[^>]*>\{issue\.message\}<\/li>/);
 });

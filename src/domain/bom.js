@@ -131,6 +131,14 @@ export function calculateBom({ rawMdc, matrixCsvText, phcCsvText }) {
   }
 
   const phcReference = createPhcLookup(phcCsvText).find(parsedMdc.value.normalizedMdc);
+  if (!phcReference) {
+    return blockedBom(rawMdc, parsedMdc.value.normalizedMdc, [{
+      severity: "problem",
+      kind: "phc_not_found",
+      message: "PHC reference not found"
+    }]);
+  }
+
   const materials = calculateBomMaterials(parsedMdc.value, matrix.value);
   const status = deriveBomStatus({
     phcReference,
