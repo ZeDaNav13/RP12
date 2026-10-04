@@ -154,19 +154,21 @@ export default function MaterialsTool() {
                 readOnly={hasUsableResult}
               />
             </label>
-            <button
-              className="primary materialsCalculate"
-              type="button"
-              onClick={calculate}
-              disabled={runtimeData.status !== "ready"}
-            >
-              Mostrar Materiais
-            </button>
+            {!hasUsableResult ? (
+              <button
+                className="primary materialsCalculate"
+                type="button"
+                onClick={calculate}
+                disabled={runtimeData.status !== "ready"}
+              >
+                Mostrar Materiais
+              </button>
+            ) : null}
             {hasUsableResult ? (
-              <>
-                <button type="button" onClick={editCalculatedReference}>Editar</button>
-                <button type="button" onClick={clearCalculatedReference}>Limpar</button>
-              </>
+              <div className="materialsReferenceActions">
+                <button className="primary materialsEdit" type="button" onClick={editCalculatedReference}>Editar</button>
+                <button className="secondary materialsClear" type="button" onClick={clearCalculatedReference}>Limpar</button>
+              </div>
             ) : null}
           </div>
           {runtimeData.status === "loading" ? <p className="materialsNotice">A carregar dados de materiais…</p> : null}

@@ -109,18 +109,34 @@ body {
 }
 
 .materialsInputRow {
-  display: flex;
-  align-items: end;
-  gap: 16px;
+  display: grid;
+  gap: 12px;
 }
 
 .materialsInputRow .materialsField {
-  flex: 1;
+  width: 100%;
   min-width: 0;
 }
 
 .materialsCalculate {
   width: fit-content;
+  justify-self: start;
+}
+
+.materialsReferenceActions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  width: min(100%, 320px);
+}
+
+.materialsReferenceActions button {
+  width: 100%;
+}
+
+.materialsClear {
+  background: var(--main-white);
+  color: var(--main-blue);
 }
 
 .materialsExportActions {
@@ -572,7 +588,6 @@ td {
   }
 
   .materialsInputRow {
-    flex-direction: column;
     align-items: stretch;
   }
 
@@ -581,6 +596,10 @@ td {
   }
 
   .materialsCalculate {
+    width: 100%;
+  }
+
+  .materialsReferenceActions {
     width: 100%;
   }
 

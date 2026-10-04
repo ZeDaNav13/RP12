@@ -85,8 +85,9 @@ test("Materials narrow screens keep the calculation action and technical tables 
     /\.materialsComponents table,\s*\.materialsTotals table\s*\{([^}]*)\}/
   )?.[1] ?? "";
 
-  assert.match(narrowStyles, /\.materialsInputRow\s*\{[^}]*flex-direction:\s*column/);
+  assert.doesNotMatch(narrowStyles, /\.materialsInputRow\s*\{[^}]*flex-direction/);
   assert.match(narrowStyles, /\.materialsCalculate\s*\{[^}]*width:\s*100%/);
+  assert.match(narrowStyles, /\.materialsReferenceActions\s*\{[^}]*width:\s*100%/);
   assert.match(narrowStyles, /\.materialsComponents \.tableWrap,\s*\.materialsTotals \.tableWrap\s*\{[^}]*overflow-x:\s*auto/);
   assert.match(materialsTableRule, /min-width:\s*720px/);
   assert.match(materialsTableRule, /width:\s*100%/);
