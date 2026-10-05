@@ -1,35 +1,53 @@
-RP12 Selector - Quick Upload Guide
-==================================
+RP12 Selector — Client Technical Installation Guide — v1.7
+==========================================================
 
-1) Initial upload
-- Upload and extract `selector_ready_to_upload.zip` on your server.
-- Confirm it creates a folder named `selector`.
-- Open in browser:
-  https://YOUR-SERVER-ADDRESS/selector/
+Delivery model
+--------------
+This is a self-contained static web application. It has no backend, no database,
+and no runtime Node/npm requirement on the client server.
 
-2) What is inside this package
-- `index.html` + `assets/` = the Selector application.
-- `questions/` = editable CSV files for Selector dropdowns.
-- `styleguide.json` = client-adjustable color tokens.
-- `fonts/` and favicon files = required visual assets.
+Installation path
+-----------------
+Deploy the complete delivered `selector/` folder at:
 
-This package is self-contained. It does not require the LDM package and does not
-include LDM materials data or the equipment PHC registry.
+  /selector/
 
-3) How to update Selector CSV data
-- Go to `selector/questions/` on the server.
-- Replace only the CSV files you need to update.
-- Do not rename files, change headers, or change the comma-separated CSV format.
-- Save CSV files in UTF-8.
+The built application uses this base path. If a different server path is needed,
+the application must be built again for that path; do not simply rename the
+deployed folder.
 
-Optional style update:
-- Replace `selector/styleguide.json` if you need to change colors.
+Installation
+------------
+- Upload and extract `selector_ready_to_upload_v1.7.zip` (or the current generic
+  delivery ZIP) on the server.
+- Deploy the entire `selector/` folder and preserve its internal directory and
+  file structure.
+- Do not cherry-pick only `index.html` or `assets/`.
+- Do not combine this application with `lista_materiais/` in one directory.
 
-4) After uploading updated files
-- Refresh the page in the browser.
-- If changes do not appear, use a hard refresh (Ctrl+F5 or Cmd+Shift+R).
+Updating an existing installation
+---------------------------------
+Replace the complete deployed `selector/` folder instead of merging old and new
+hashed assets. Keep the previous deployed folder/package available for rollback
+until v1.7 has been verified.
 
-5) Selector notes
+Post-deployment verification
+----------------------------
+- Open `https://YOUR-SERVER-ADDRESS/selector/`.
+- Confirm the page title and header are `Selector MDC`.
+- Confirm the Selector questions and runtime CSVs load.
+
+Runtime client-editable data
+----------------------------
+- `selector/questions/*.csv` contains the editable Selector questions.
+- `selector/styleguide.json` contains client-adjustable colour tokens.
+
+Do not rename files, change CSV headers, or change the comma-separated UTF-8
+format. This package does not include LDM materials data or the equipment PHC
+registry.
+
+Selector notes
+--------------
 - The price starts hidden in the Resumo section.
 - Click the eye icon to show the price. After showing it, the same place gives a copy icon.
 - If the price is hidden when printing, the PDF does not include the price.

@@ -14,7 +14,8 @@
     "generate:combinations": "node scripts/generate-combinations.mjs",
     "preview": "vite preview",
     "release:prepare": "npm run generate:combinations && npm run build && node scripts/prepare-client-release.mjs",
-    "release:client": "npm run generate:combinations && npm run build && node scripts/prepare-client-release.mjs --zip"
+    "release:client": "npm run generate:combinations && npm run build && node scripts/prepare-client-release.mjs --zip",
+    "release:client-input": "node scripts/prepare-client-input.mjs"
   },
   "dependencies": {
     "jspdf": "^4.2.1",
