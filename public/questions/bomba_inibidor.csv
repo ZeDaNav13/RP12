@@ -1,4 +1,4 @@
-option,price,code,description
-VMS0706,450.70,BDP,Bomba Doseadora Proporcional
-VCL0706,287.96,BDC,Bomba Doseadora Constante
-Sem Bombas,0,-,
+phc,option,price,code,description
+49.10301032368N,VMS0706,450.70,BDP,Bomba Doseadora Proporcional
+49.10301032116N,VCL0706,287.96,BDC,Bomba Doseadora Constante
+,Sem Bombas,0,-,

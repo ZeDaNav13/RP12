@@ -1,8 +1,8 @@
-option,price,code,description
-CP10,1735.88,CP10,CP10 - Sem bomba de recirculação e sem comunicação remota
-CP20,1861.68,CP20,CP20 - Com uma bomba de recirculação e sem comunicação remota
-CP30,2034.94,CP30,CP30 - Sem bomba de recirculação e com comunicação remota
-CP40,2124.76,CP40,CP40 - Com uma bomba de recirculação e com comunicação remota
-CP50,2272.30,CP50,CP50 - Com duas bombas de recirculação e sem comunicação remota
-CP60,2575.72,CP60,CP60 - Com duas bombas de recirculação e com comunicação remota
-Nenhum,0.00,_,
+phc,option,price,code,description
+534.B310CP10,CP10,1735.88,CP10,CP10 - Sem bomba de recirculação e sem comunicação remota
+534.B310CP20,CP20,1861.68,CP20,CP20 - Com uma bomba de recirculação e sem comunicação remota
+534.B310CP30,CP30,2034.94,CP30,CP30 - Sem bomba de recirculação e com comunicação remota
+534.B310CP40,CP40,2124.76,CP40,CP40 - Com uma bomba de recirculação e com comunicação remota
+534.B310CP50,CP50,2272.30,CP50,CP50 - Com duas bombas de recirculação e sem comunicação remota
+534.B310CP60,CP60,2575.72,CP60,CP60 - Com duas bombas de recirculação e com comunicação remota
+,Nenhum,0.00,_,

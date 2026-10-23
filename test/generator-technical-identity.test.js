@@ -48,11 +48,19 @@ function parseCsv(text) {
 }
 
 function renameCsvOption(text, currentOption, renamedOption) {
+  const [headerLine, ...dataLines] = text.split(/\r?\n/);
+  const optionIndex = parseCsvLine(headerLine).indexOf("option");
+  assert.notEqual(optionIndex, -1, "CSV fixture must have an option column");
+
   let renamed = false;
-  const lines = text.split(/\r?\n/).map((line, index) => {
-    if (index > 0 && line.startsWith(`${currentOption},`)) {
+  const lines = [headerLine, ...dataLines].map((line, index) => {
+    const cells = parseCsvLine(line);
+    if (index > 0 && cells[optionIndex] === currentOption) {
       renamed = true;
-      return `${renamedOption}${line.slice(currentOption.length)}`;
+      cells[optionIndex] = renamedOption;
+      return cells
+        .map((cell) => (/[",\r\n]/.test(cell) ? `"${cell.replaceAll('"', '""')}"` : cell))
+        .join(",");
     }
     return line;
   });

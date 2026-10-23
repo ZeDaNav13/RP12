@@ -1,15 +1,15 @@
-option,price,code,model
-Cloro 0-2 mA Reiss CS4,1117.08,Cl2mA,CS4
-Cloro 0-5 mA Reiss CS4,1117.08,Cl5mA,CS4
-Cloro 0-10 mA Reiss CS4,1117.08,Cl10mA,CS4
-Cloro Reiss AS3 mA 0-5/0-1.7 c/RV1,2273.62,Cl5mA,AS3
-Cloro Reiss AS3 mA 0-20/0-7 c/RV1,2273.62,Cl20mA,AS3
-Cloro Reiss AS2 mA 0-5/0-1.7 c/RV1,2006.34,Cl5mA,AS2
-Cloro Reiss AS2 mA 0-20/0-7 c/RV1,2006.34,Cl20mA,AS2
-Cloro 0-2 Reiss CS4 m0c,1751.66,Cl2m0c,CS4
-Cloro 0-20 Reiss CS4 m0c,1751.66,Cl20m0c,CS4
-Cloro Reiss AS3 m0c 0-2/0-0.7 c/RV1,2160.48,Cl2m0c,AS3
-Cloro Reiss AS3 m0c 0-20/0-7 c/RV1,2160.48,Cl20m0c,AS3
-Cloro Reiss AS2 m0c 0-2/0-0.7 c/RV1,1998.42,Cl2m0c,AS2
-Cloro Reiss AS2 m0c 0-20/0-7 c/RV1,1998.42,Cl20m0c,AS2
-Sem sonda de cloro,0,-,
+phc,option,price,code,model
+1148.3426313,Cloro 0-2 mA Reiss CS4,1117.08,Cl2mA,CS4
+1148.3426314,Cloro 0-5 mA Reiss CS4,1117.08,Cl5mA,CS4
+1148.3426315,Cloro 0-10 mA Reiss CS4,1117.08,Cl10mA,CS4
+1148.3426742,Cloro Reiss AS3 mA 0-5/0-1.7 c/RV1,2273.62,Cl5mA,AS3
+1148.3426744,Cloro Reiss AS3 mA 0-20/0-7 c/RV1,2273.62,Cl20mA,AS3
+1148.3426792,Cloro Reiss AS2 mA 0-5/0-1.7 c/RV1,2006.34,Cl5mA,AS2
+1148.3426794,Cloro Reiss AS2 mA 0-20/0-7 c/RV1,2006.34,Cl20mA,AS2
+1148.3426360,Cloro 0-2 Reiss CS4 m0c,1751.66,Cl2m0c,CS4
+1148.3426361,Cloro 0-20 Reiss CS4 m0c,1751.66,Cl20m0c,CS4
+1148.3426720,Cloro Reiss AS3 m0c 0-2/0-0.7 c/RV1,2160.48,Cl2m0c,AS3
+1148.3426721,Cloro Reiss AS3 m0c 0-20/0-7 c/RV1,2160.48,Cl20m0c,AS3
+1148.3426770,Cloro Reiss AS2 m0c 0-2/0-0.7 c/RV1,1998.42,Cl2m0c,AS2
+1148.3426771,Cloro Reiss AS2 m0c 0-20/0-7 c/RV1,1998.42,Cl20m0c,AS2
+,Sem sonda de cloro,0,-,
