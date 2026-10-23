@@ -4,3 +4,7 @@ dist
 /mdc_tool_ready_to_upload*.zip
 /release/mdc_tool_ready_to_upload*.zip
 /client-input/
+/release/selector/
+/release/lista_materiais/
+/selector_ready_to_upload*.zip
+/lista_materiais_ready_to_upload*.zip

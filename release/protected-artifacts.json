@@ -1,0 +1,9 @@
+{
+  "artifacts": [
+    {
+      "path": "release/mdc_tool_ready_to_upload_v1.6_protected.zip",
+      "sha256": "3eab2c0f767e92fdda1a9a67790a9ec758fa9c332d68e502e235462ed2a6c4c4",
+      "purpose": "Protected historical v1.6 client package"
+    }
+  ]
+}

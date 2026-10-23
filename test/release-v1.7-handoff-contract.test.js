@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
-import { access, cp, mkdtemp, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
+import { cp, mkdtemp, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
@@ -41,8 +41,20 @@ test("v1.7 is the active release version and its delivery scripts retain separat
   assert.match(packageJson.scripts["release:client"], /--zip/);
 });
 
-test("the protected historical v1.6 ZIP remains outside the active release version", async () => {
-  await access(path.join(repoRoot, "release/mdc_tool_ready_to_upload_v1.6_protected.zip"));
+test("the protected historical v1.6 ZIP has an immutable tracked manifest", async () => {
+  const manifest = JSON.parse(
+    await readFile(path.join(repoRoot, "release/protected-artifacts.json"), "utf8")
+  );
+
+  assert.deepEqual(manifest, {
+    artifacts: [
+      {
+        path: "release/mdc_tool_ready_to_upload_v1.6_protected.zip",
+        sha256: "3eab2c0f767e92fdda1a9a67790a9ec758fa9c332d68e502e235462ed2a6c4c4",
+        purpose: "Protected historical v1.6 client package"
+      }
+    ]
+  });
 });
 
 test("v1.7 client READMEs document static deployment paths and data ownership", async () => {
