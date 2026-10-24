@@ -27,6 +27,24 @@ async function writeFixtureFile(root, relativePath, contents) {
   await writeFile(targetPath, contents);
 }
 
+test("repository baseline retires the stale GitHub Pages deployment workflow", async () => {
+  const [agents, ci] = await Promise.all([
+    readFile(path.join(repoRoot, "AGENTS.md"), "utf8"),
+    readFile(path.join(repoRoot, ".github/workflows/ci.yml"), "utf8")
+  ]);
+
+  await assert.rejects(readFile(path.join(repoRoot, ".github/workflows/deploy-pages.yml"), "utf8"), {
+    code: "ENOENT"
+  });
+  assert.match(agents, /GitHub Pages is not an active RP12 delivery target/i);
+  assert.match(agents, /Selector\/LDM client release packages/i);
+  assert.match(agents, /release regeneration requires explicit accepted release work/i);
+
+  for (const command of ["npm ci", "npm test", "npm run build:selector", "npm run build:ldm"]) {
+    assert.match(ci, new RegExp(escapeRegExp(command)));
+  }
+});
+
 test("repository baseline tracks source contracts without requiring generated releases", async () => {
   const [gitignore, packageJsonText, releaseTest, agents, ci, manifestText] = await Promise.all([
     readFile(path.join(repoRoot, ".gitignore"), "utf8"),

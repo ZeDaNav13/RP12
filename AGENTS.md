@@ -19,6 +19,12 @@
 - Release regeneration requires explicit accepted release work; do not regenerate release outputs during normal implementation tasks.
 - Keep generated artifacts separate from source commits.
 
+## Delivery
+
+- GitHub Pages is not an active RP12 delivery target.
+- Normal accepted delivery is through the Selector/LDM client release packages.
+- Do not add or enable a deployment workflow or deployment surface unless explicitly approved as project scope.
+
 ## Protected Historical Artifact
 
 - `release/mdc_tool_ready_to_upload_v1.6_protected.zip` is a local protected historical artifact with SHA-256 `3eab2c0f767e92fdda1a9a67790a9ec758fa9c332d68e502e235462ed2a6c4c4`.
