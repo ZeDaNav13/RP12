@@ -60,3 +60,15 @@ test("MaterialsTool clears a previous calculation when equipment PHC validation 
   assert.match(source, /\{validationMessage \? <p className="materialsNotice">\{validationMessage\}<\/p> : null\}/);
   assert.doesNotMatch(source, /historyStore\.(?:clear|remove|reset)/);
 });
+
+test("MaterialsTool validates PHC runtime data before enabling calculation", async () => {
+  const source = await fs.readFile(materialsToolPath, "utf8");
+
+  assert.match(source, /import \{ createPhcLookup \} from "\.\/domain\/bom-phc\.js";/);
+  assert.match(
+    source,
+    /const \[matrixCsvText, phcCsvText\] = await Promise\.all\(\[\s*matrixResponse\.text\(\),\s*phcResponse\.text\(\)\s*\]\);\s*createPhcLookup\(phcCsvText\);\s*if \(!cancelled\) \{\s*setRuntimeData\(\{ status: "ready", matrixCsvText, phcCsvText \}\);/
+  );
+  assert.match(source, /catch \{\s*if \(!cancelled\) \{\s*setRuntimeData\(\{ status: "error", matrixCsvText: "", phcCsvText: "" \}\);/);
+  assert.match(source, /disabled=\{runtimeData\.status !== "ready"\}/);
+});

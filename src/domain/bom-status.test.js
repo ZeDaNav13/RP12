@@ -51,6 +51,48 @@ test("createPhcLookup normalizes registry identities and ignores price", () => {
   assert.equal(lookup.find("MDC_iS.CP20_M1Xx_AF"), null);
 });
 
+test("createPhcLookup rejects missing identity headers before normalizing rows", () => {
+  assert.throws(
+    () => createPhcLookup("referencia_phc,total_price\nPHC-001,999.99"),
+    /missing required PHC CSV header: assembly_code/
+  );
+  assert.throws(
+    () => createPhcLookup("assembly_code,total_price\nMDC_iS.CP10_M1Xx_AF,999.99"),
+    /missing required PHC CSV header: referencia_phc/
+  );
+});
+
+test("createPhcLookup rejects an HTML runtime payload before it reaches MDC normalization", () => {
+  assert.throws(
+    () => createPhcLookup("<!doctype html><html><body>RP12</body></html>"),
+    (error) => {
+      assert.match(error.message, /missing required PHC CSV header: referencia_phc/);
+      assert.doesNotMatch(error.message, /replace/);
+      return true;
+    }
+  );
+});
+
+test("createPhcLookup rejects incomplete identity rows before normalizing cells", () => {
+  const invalidRows = [
+    ["short row", "referencia_phc,assembly_code,total_price\n534.iS200000000001", "assembly_code"],
+    ["blank assembly code", "referencia_phc,assembly_code,total_price\n534.iS200000000001,,123", "assembly_code"],
+    ["blank PHC reference", "referencia_phc,assembly_code,total_price\n,MDC_iS.CP10_M1Xx_AF,123", "referencia_phc"]
+  ];
+
+  for (const [label, csvText, missingField] of invalidRows) {
+    assert.throws(
+      () => createPhcLookup(csvText),
+      (error) => {
+        assert.match(error.message, new RegExp(`Invalid PHC CSV row 2: missing required value: ${missingField}`));
+        assert.doesNotMatch(error.message, /replace/);
+        return true;
+      },
+      label
+    );
+  }
+});
+
 test("calculateBom returns complete with found PHC and reuses Task 3 material results", () => {
   const rawMdc = " MDC_iS.CP10___M1 Xx_AF ";
   const result = calculate({

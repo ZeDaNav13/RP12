@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { calculateBom } from "./domain/bom.js";
+import { createPhcLookup } from "./domain/bom-phc.js";
 import { exportBomExcel, materialsExcelFilename } from "./domain/bom-excel-workflow.js";
 import { createBomHistoryStore } from "./domain/bom-history.js";
 import { createMaterialsViewState } from "./domain/bom-ui-state.js";
@@ -44,6 +45,7 @@ export default function MaterialsTool() {
           matrixResponse.text(),
           phcResponse.text()
         ]);
+        createPhcLookup(phcCsvText);
         if (!cancelled) {
           setRuntimeData({ status: "ready", matrixCsvText, phcCsvText });
         }
