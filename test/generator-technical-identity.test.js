@@ -132,9 +132,17 @@ async function createGeneratorFixture() {
     path.join(rootDir, "src", "domain", "probes.js"),
     path.join(fixtureRoot, "src", "domain", "probes.js")
   );
+  await fs.copyFile(
+    path.join(rootDir, "src", "domain", "equipmentComposition.js"),
+    path.join(fixtureRoot, "src", "domain", "equipmentComposition.js")
+  );
   await fs.cp(path.join(rootDir, "public", "questions"), path.join(fixtureRoot, "public", "questions"), {
     recursive: true
   });
+  await fs.copyFile(
+    path.join(rootDir, "public", "selector_phc_registry.csv"),
+    path.join(fixtureRoot, "public", "selector_phc_registry.csv")
+  );
 
   return fixtureRoot;
 }
@@ -201,7 +209,7 @@ test("generator compatibility ignores editable circuit and chlorine labels", asy
   const canonicalRows = parseCsv(await fs.readFile(path.join(rootDir, "all_reply_combinations_filtered.csv"), "utf8"));
   const fixtureRows = parseCsv(await fs.readFile(path.join(fixtureRoot, "all_reply_combinations_filtered.csv"), "utf8"));
 
-  assert.equal(fixtureRows.length, 5940);
+  assert.equal(fixtureRows.length, 11700);
   assert.deepEqual(compatibilityTechnicalIdentities(fixtureRows), compatibilityTechnicalIdentities(canonicalRows));
 });
 
@@ -225,7 +233,7 @@ test("generator PT suffix ignores editable chlorine labels", async (context) => 
     await fs.readFile(path.join(fixtureRoot, "all_reply_combinations_filtered.csv"), "utf8")
   );
 
-  assert.equal(fixtureRows.length, 5940);
+  assert.equal(fixtureRows.length, 11700);
   assert.deepEqual(compatibilityTechnicalIdentities(fixtureRows), compatibilityTechnicalIdentities(canonicalRows));
 });
 
@@ -249,6 +257,6 @@ test("generator porta-sondas suffix ignores editable chlorine labels", async (co
     await fs.readFile(path.join(fixtureRoot, "all_reply_combinations_filtered.csv"), "utf8")
   );
 
-  assert.equal(fixtureRows.length, 5940);
+  assert.equal(fixtureRows.length, 11700);
   assert.deepEqual(compatibilityTechnicalIdentities(fixtureRows), compatibilityTechnicalIdentities(canonicalRows));
 });

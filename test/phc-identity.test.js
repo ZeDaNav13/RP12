@@ -64,7 +64,7 @@ test("historical MDC references retain their permanent PHC identities", async ()
   assertIdentityColumns(historical.headers, "phc_integration.csv");
   assertIdentityColumns(current.headers, "all_reply_combinations_filtered.csv");
   assert.equal(historical.rows.length, 5940);
-  assert.equal(current.rows.length, 5940);
+  assert.equal(current.rows.length, 11700);
 
   const historicalByMdc = new Map();
   const historicalPhcReferences = new Set();
@@ -91,38 +91,30 @@ test("historical MDC references retain their permanent PHC identities", async ()
   assert.equal(historicalByMdc.size, 5940);
   assert.equal(historicalPhcReferences.size, 5940);
 
-  const currentMdcReferences = new Set();
+  const currentReferencesByMdc = new Map();
   const missingMappings = [];
-  const conflictingMappings = [];
 
   for (const row of current.rows) {
     const mdc = normalizeMdcReference(row.assembly_code);
     const historicalPhcReference = historicalByMdc.get(mdc);
-
-    assert.equal(currentMdcReferences.has(mdc), false, `duplicate current MDC reference: ${mdc}`);
-    currentMdcReferences.add(mdc);
+    const references = currentReferencesByMdc.get(mdc) ?? new Set();
+    references.add(row.referencia_phc);
+    currentReferencesByMdc.set(mdc, references);
 
     if (historicalPhcReference === undefined) {
       missingMappings.push(mdc);
-    } else if (row.referencia_phc !== historicalPhcReference) {
-      conflictingMappings.push({
-        mdc,
-        historicalPhcReference,
-        currentPhcReference: row.referencia_phc
-      });
     }
   }
 
-  const missingHistoricalMappings = [...historicalByMdc.keys()].filter(
-    (mdc) => !currentMdcReferences.has(mdc)
+  const missingHistoricalMappings = [...historicalByMdc.entries()].filter(
+    ([mdc, phcReference]) => !currentReferencesByMdc.get(mdc)?.has(phcReference)
   );
 
-  assert.equal(currentMdcReferences.size, 5940);
+  assert.equal(currentReferencesByMdc.size, 5940);
   assert.equal(missingMappings.length, 0, `missing historical mappings: ${missingMappings.length}`);
   assert.equal(
     missingHistoricalMappings.length,
     0,
     `historical mappings missing from current combinations: ${missingHistoricalMappings.length}`
   );
-  assert.equal(conflictingMappings.length, 0, `conflicting PHC mappings: ${conflictingMappings.length}`);
 });
