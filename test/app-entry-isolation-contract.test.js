@@ -40,7 +40,13 @@ test("independent app roots isolate Selector and LDM ownership", async () => {
   assert.match(selectorSource, /<ToolHeader title=\{APP_TITLE\}\s*\/>/);
   assertDoesNotContain(selectorSource, /Ferramenta MDC/, "Selector title must not retain the former combined-app name");
   assert.match(selectorSource, /const QUESTION_DEFS = \[/);
-  assert.match(selectorSource, /function buildUniqueAssemblyCodes\(/);
+  assert.match(selectorSource, /parseSelectorPhcRegistry/);
+  assert.match(selectorSource, /resolveSelectorPhcReference/);
+  assertDoesNotContain(
+    selectorSource,
+    /buildUniqueAssemblyCodes|phcReferenceForIndex|getPhcReference/,
+    "Selector must not retain the obsolete MDC-index PHC path"
+  );
   assert.match(selectorSource, /import \{ useStyleguide \} from "\.\/shared\/styleguide\.js"/);
   assert.match(selectorSource, /useStyleguide\(\);/);
   assertDoesNotContain(selectorSource, /MaterialsTool|MaterialsApp|workspace|setWorkspace/, "Selector must not own LDM navigation");

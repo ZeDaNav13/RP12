@@ -7,6 +7,7 @@ import { isChlorineRowCompatible, OPEN_COOLING_WATER_TYPES } from "./domain/comp
 import { resolveIs2ModelCode } from "./domain/mdc.js";
 import { buildPumpSegment } from "./domain/pumps.js";
 import { requiresPtSuffix, resolvePortaSondasSuffix } from "./domain/probes.js";
+import { parseSelectorPhcRegistry, resolveSelectorPhcReference } from "./domain/selectorPhcRegistry.js";
 import {
   isTechnicalAbsenceRow,
   isTechnicalAbsenceSelection,
@@ -93,17 +94,9 @@ const pumpQuestionIds = [
 
 const probeQuestionIds = ["sonda_cloro", "sonda_ph", "sonda_condutividade"];
 const openCoolingWaterTypes = OPEN_COOLING_WATER_TYPES;
-const PHC_REFERENCE_PREFIX = "534.iS2";
-const PHC_REFERENCE_START = 1n;
-const PHC_REFERENCE_WIDTH = 11;
 const EMPTY_OPTION = "";
 const APP_VERSION = releaseVersion.version;
 const APP_TITLE = "Selector MDC";
-
-function phcReferenceForIndex(index) {
-  const number = PHC_REFERENCE_START + BigInt(index);
-  return `${PHC_REFERENCE_PREFIX}${String(number).padStart(PHC_REFERENCE_WIDTH, "0")}`;
-}
 
 function keyFor(questionId, option) {
   return `${questionId}:${option}`;
@@ -197,6 +190,11 @@ function getOptionRow(questionRows, questionId, option) {
   return (questionRows[questionId] ?? []).find((row) => row.option === option) ?? null;
 }
 
+function getCodeRow(questionRows, questionId, code) {
+  if (!code) return null;
+  return (questionRows[questionId] ?? []).find((row) => row.code === code) ?? null;
+}
+
 function getCircuitClass(questionRows, circuito) {
   return getOptionRow(questionRows, CIRCUITO_DEF.id, circuito)?.circuit_class ?? "general";
 }
@@ -283,23 +281,6 @@ function buildDetailRow(id, question, selection, code, price) {
   };
 }
 
-function buildCircuitVariants(questionRows) {
-  return (questionRows[CIRCUITO_DEF.id] ?? [])
-    .filter((row) => !isTechnicalAbsenceRow(row))
-    .flatMap((circuitoRow) => {
-      const circuitClass = circuitoRow.circuit_class ?? "general";
-      if (circuitClass !== "open_cooling") {
-        return [{ circuito: circuitoRow.option, circuitClass, openCoolingWaterType: "" }];
-      }
-
-      return openCoolingWaterTypes.map((type) => ({
-        circuito: circuitoRow.option,
-        circuitClass,
-        openCoolingWaterType: type
-      }));
-    });
-}
-
 function hasSelectedCode(codes) {
   return codes.some((code) => code !== "-");
 }
@@ -309,38 +290,6 @@ function getSelectedCodes(questionRows, questionIds, answers) {
     const option = answers[questionId] ?? "";
     return (defaultAssemblyCode(questionRows, questionId, option) ?? "-").trim() || "-";
   });
-}
-
-function cartesian(rows) {
-  return rows.reduce(
-    (acc, list) => acc.flatMap((prefix) => list.map((item) => [...prefix, item])),
-    [[]]
-  );
-}
-
-function buildPumpCombinations(questionRows) {
-  const pumpRows = questionRows.bomba_biocida_inorganico ?? [];
-  const proportionalPump = pumpRows.find((row) => row.code === "BDP");
-  const constantPump = pumpRows.find((row) => row.code === "BDC");
-  const noPump = pumpRows.find((row) => row.code === "-");
-  if (!proportionalPump || !constantPump) return [];
-
-  const combinations = [];
-  for (let proportionalCount = 0; proportionalCount <= 4; proportionalCount += 1) {
-    for (let constantCount = 0; constantCount <= 4 - proportionalCount; constantCount += 1) {
-      const selectedPumpRows = [
-        ...Array(proportionalCount).fill(proportionalPump),
-        ...Array(constantCount).fill(constantPump),
-        ...Array(4 - proportionalCount - constantCount).fill(noPump)
-      ];
-      combinations.push({
-        proportionalCount,
-        constantCount,
-        pumpSegment: buildPumpSegment(selectedPumpRows)
-      });
-    }
-  }
-  return combinations;
 }
 
 function normalizeAssemblyCode(value) {
@@ -373,61 +322,6 @@ function buildAssemblyCode(questionRows, modelOption, pumpSegment, probeCodes, p
   );
 }
 
-function buildUniqueAssemblyCodes(questionRows) {
-  const modelRows = (questionRows.is2_modelo ?? []).filter((row) => !isTechnicalAbsenceRow(row));
-  const pumpCombinations = buildPumpCombinations(questionRows);
-  const circuitVariants = buildCircuitVariants(questionRows);
-  const assemblyCodes = [];
-  const seen = new Set();
-
-  for (const modelRow of modelRows) {
-    for (const pumpCombination of pumpCombinations) {
-      for (const { circuito, circuitClass, openCoolingWaterType } of circuitVariants) {
-        const probeLists = probeQuestionIds.map((questionId) =>
-          getProbeRowsForCircuit(
-            questionRows[questionId] ?? [],
-            questionId,
-            circuitClass,
-            openCoolingWaterType
-          )
-        );
-
-        for (const [sondaCloro, sondaPh, sondaCondutividade] of cartesian(probeLists)) {
-          const probeCodes = [sondaCloro, sondaPh, sondaCondutividade].map(
-            (row) => (row.code ?? "-").trim() || "-"
-          );
-          if (!hasSelectedCode(probeCodes)) continue;
-
-          const assemblyCode = buildAssemblyCode(
-            questionRows,
-            modelRow.option,
-            pumpCombination.pumpSegment,
-            probeCodes,
-            {
-              sonda_cloro: sondaCloro.option,
-              sonda_ph: sondaPh.option,
-              sonda_condutividade: sondaCondutividade.option
-            },
-            circuito
-          );
-          if (seen.has(assemblyCode)) continue;
-
-          seen.add(assemblyCode);
-          assemblyCodes.push(assemblyCode);
-        }
-      }
-    }
-  }
-
-  return assemblyCodes;
-}
-
-function getPhcReference(assemblyCodes, assemblyCode, canGeneratePrice, hasModel, hasCircuito) {
-  if (!canGeneratePrice || !hasModel || !hasCircuito) return "-";
-  const index = assemblyCodes.indexOf(assemblyCode);
-  return index < 0 ? "-" : phcReferenceForIndex(index);
-}
-
 function money(value) {
   return new Intl.NumberFormat("pt-PT", {
     style: "currency",
@@ -438,6 +332,7 @@ function money(value) {
 
 export default function SelectorApp() {
   const [questionRows, setQuestionRows] = useState({});
+  const [selectorPhcRegistry, setSelectorPhcRegistry] = useState(() => new Map());
   const [answers, setAnswers] = useState(buildEmptyAnswers);
   const [circuito, setCircuito] = useState("");
   const [openCoolingWaterType, setOpenCoolingWaterType] = useState(openCoolingWaterTypes[0]);
@@ -461,26 +356,37 @@ export default function SelectorApp() {
     async function loadQuestionData() {
       try {
         const defs = [...QUESTION_DEFS, CIRCUITO_DEF, PORTA_SONDAS_DEF, BDW_DEF, MANDATORY_ADDONS_DEF];
-        const loaded = await Promise.all(
-          defs.map(async (def) => {
-            const response = await fetch(`${import.meta.env.BASE_URL}questions/${def.csvFile}`, {
-              cache: "no-store"
-            });
-            if (!response.ok) {
-              throw new Error(`Failed to load ${def.csvFile}`);
+        const [loaded, registryText] = await Promise.all([
+          Promise.all(
+            defs.map(async (def) => {
+              const response = await fetch(`${import.meta.env.BASE_URL}questions/${def.csvFile}`, {
+                cache: "no-store"
+              });
+              if (!response.ok) {
+                throw new Error(`Failed to load ${def.csvFile}`);
+              }
+              const csvText = await response.text();
+              return [def.id, parseCsv(csvText)];
+            })
+          ),
+          fetch(`${import.meta.env.BASE_URL}selector_phc_registry.csv`, { cache: "no-store" }).then(
+            async (response) => {
+              if (!response.ok) {
+                throw new Error("Failed to load selector_phc_registry.csv");
+              }
+              return response.text();
             }
-            const csvText = await response.text();
-            return [def.id, parseCsv(csvText)];
-          })
-        );
+          )
+        ]);
 
         if (!cancelled) {
           setQuestionRows(Object.fromEntries(loaded));
+          setSelectorPhcRegistry(parseSelectorPhcRegistry(registryText));
           setLoadError("");
         }
       } catch (error) {
         if (!cancelled) {
-          setLoadError("Erro ao carregar CSVs das perguntas.");
+          setLoadError("Erro ao carregar dados do Selector.");
         }
       }
     }
@@ -675,21 +581,46 @@ export default function SelectorApp() {
     [answers, circuito, currentPumpSegment, probeCodes, questionRows]
   );
 
-  const uniqueAssemblyCodes = useMemo(
-    () => buildUniqueAssemblyCodes(questionRows),
-    [questionRows]
-  );
-
   const phcReference = useMemo(
-    () =>
-      getPhcReference(
-        uniqueAssemblyCodes,
-        assemblyLine,
-        canGeneratePrice,
-        !isQuestionSelectionAbsent(questionRows, "is2_modelo", answers.is2_modelo),
-        Boolean(circuito)
-      ),
-    [answers.is2_modelo, assemblyLine, canGeneratePrice, circuito, uniqueAssemblyCodes]
+    () => {
+      if (
+        !canGeneratePrice ||
+        !answers.is2_modelo ||
+        isQuestionSelectionAbsent(questionRows, "is2_modelo", answers.is2_modelo) ||
+        !circuito
+      ) {
+        return "-";
+      }
+
+      const selectedModelRow = getOptionRow(questionRows, "is2_modelo", answers.is2_modelo);
+      const selectedProbeRows = probeQuestionIds.map((questionId) =>
+        getOptionRow(questionRows, questionId, answers[questionId] ?? "")
+      );
+      const chlorineRow = selectedProbeRows[0];
+      const portaSondasCode = resolvePortaSondasCode(probeCodes, chlorineRow);
+      const portaSondasRow = getCodeRow(questionRows, PORTA_SONDAS_DEF.id, portaSondasCode);
+
+      if (!selectedModelRow || !portaSondasRow) return "-";
+
+      return resolveSelectorPhcReference(selectorPhcRegistry, {
+        selectedModelRow,
+        selectedPumpRows: pumpRows,
+        selectedProbeRows,
+        portaSondasRow,
+        bdwApplies: needsBDW(questionRows, circuito),
+        bdwRows: questionRows[BDW_DEF.id] ?? [],
+        mandatoryAddonRows: getMandatoryAddOns(questionRows, answers.is2_modelo)
+      });
+    },
+    [
+      answers,
+      canGeneratePrice,
+      circuito,
+      probeCodes,
+      pumpRows,
+      questionRows,
+      selectorPhcRegistry
+    ]
   );
 
   const is2Description = useMemo(() => {

@@ -46,6 +46,11 @@ async function createPackagerWorkspace() {
   await writeFixtureFile(workspace, "all_reply_combinations_filtered.csv", "combination\n");
   await writeFixtureFile(workspace, "public/styleguide.json", "{}\n");
   await writeFixtureFile(workspace, "public/questions/model.csv", "option\nCP10\n");
+  await writeFixtureFile(
+    workspace,
+    "public/selector_phc_registry.csv",
+    "referencia_phc,composition_key\n534.iS200000000001,key\n"
+  );
   await writeFixtureFile(workspace, "public/fonts/font.woff2", "font");
   await writeFixtureFile(workspace, "public/materials/materials_matrix.csv", "material_phc\n");
   await writeFixtureFile(workspace, "public/components/components.csv", "component_code,component_phc\n");
@@ -106,6 +111,7 @@ test("packager creates isolated package manifests and delivery ZIPs", async (tes
     "selector/fonts/font.woff2",
     "selector/index.html",
     "selector/questions/model.csv",
+    "selector/selector_phc_registry.csv",
     "selector/styleguide.json"
   ]);
   assert.deepEqual(ldmFiles, [
@@ -134,12 +140,14 @@ test("packager creates isolated package manifests and delivery ZIPs", async (tes
     assert.ok(!zipEntries.some((entry) => entry.includes("all_reply_combinations_filtered.csv")), zipName);
 
     if (zipName.startsWith("selector_")) {
+      assert.ok(zipEntries.includes("selector/selector_phc_registry.csv"), zipName);
       assert.ok(!zipEntries.some((entry) => entry.includes("components/")), zipName);
       assert.ok(!zipEntries.some((entry) => entry.includes("materials/")), zipName);
       assert.ok(!zipEntries.some((entry) => entry.includes("phc_integration.csv")), zipName);
       assert.ok(!zipEntries.some((entry) => entry.includes("README_lista_materiais")), zipName);
     } else {
       assert.ok(zipEntries.includes("lista_materiais/components/components.csv"), zipName);
+      assert.ok(!zipEntries.some((entry) => entry.includes("selector_phc_registry.csv")), zipName);
       assert.ok(!zipEntries.some((entry) => entry.includes("questions/")), zipName);
       assert.ok(!zipEntries.some((entry) => entry.includes("README_selector")), zipName);
     }

@@ -17,7 +17,12 @@ const apps = {
     runtimeEntries: [
       { source: "public/fonts", target: "fonts", type: "directory" },
       { source: "public/styleguide.json", target: "styleguide.json", type: "file" },
-      { source: "public/questions", target: "questions", type: "directory" }
+      { source: "public/questions", target: "questions", type: "directory" },
+      {
+        source: "public/selector_phc_registry.csv",
+        target: "selector_phc_registry.csv",
+        type: "file"
+      }
     ]
   },
   ldm: {

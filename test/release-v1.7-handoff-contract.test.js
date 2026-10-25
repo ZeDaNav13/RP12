@@ -66,6 +66,10 @@ test("v1.7 client READMEs document static deployment paths and data ownership", 
   assert.match(selectorReadme, /static web application/i);
   assert.match(selectorReadme, /no backend/i);
   assert.match(selectorReadme, /Node\/npm/i);
+  assert.match(selectorReadme, /selector_phc_registry\.csv/);
+  assert.match(selectorReadme, /canonical identity/i);
+  assert.match(selectorReadme, /not.*casual/i);
+  assert.match(selectorReadme, /physical PHC[\s\S]*regenerated/i);
   assert.match(ldmReadme, /v1\.7/);
   assert.match(ldmReadme, /\/lista_materiais\//);
   assert.match(ldmReadme, /materials\/materials_matrix\.csv/);
@@ -87,6 +91,11 @@ test("packager reserves v1.7 filenames for the later ZIP delivery command", asyn
   await writeFixtureFile(workspace, "public/styleguide.json", "{}\n");
   await writeFixtureFile(workspace, "public/fonts/font.woff2", "font");
   await writeFixtureFile(workspace, "public/questions/model.csv", "option\nCP10\n");
+  await writeFixtureFile(
+    workspace,
+    "public/selector_phc_registry.csv",
+    "referencia_phc,composition_key\n534.iS200000000001,key\n"
+  );
   await writeFixtureFile(workspace, "public/materials/materials_matrix.csv", "material_phc,description,ALWAYS\n");
   await writeFixtureFile(workspace, "public/components/components.csv", "component_code,component_phc\n");
 
@@ -101,6 +110,14 @@ test("packager reserves v1.7 filenames for the later ZIP delivery command", asyn
   const releaseRoot = path.join(workspace, "release");
   await execFileAsync(process.execPath, ["scripts/prepare-client-release.mjs", "--release-root", releaseRoot], { cwd: workspace });
   assert.deepEqual((await readdir(workspace)).filter((name) => name.endsWith(".zip")), []);
+  assert.equal(
+    await readFile(path.join(releaseRoot, "selector", "selector_phc_registry.csv"), "utf8"),
+    "referencia_phc,composition_key\n534.iS200000000001,key\n"
+  );
+  await assert.rejects(
+    readFile(path.join(releaseRoot, "lista_materiais", "selector_phc_registry.csv"), "utf8"),
+    { code: "ENOENT" }
+  );
 
   await execFileAsync(process.execPath, ["scripts/prepare-client-release.mjs", "--release-root", releaseRoot, "--zip"], { cwd: workspace });
   assert.deepEqual((await readdir(workspace)).filter((name) => name.endsWith(".zip")).sort(), [

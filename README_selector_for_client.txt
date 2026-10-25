@@ -41,10 +41,13 @@ Runtime client-editable data
 ----------------------------
 - `selector/questions/*.csv` contains the editable Selector questions.
 - `selector/styleguide.json` contains client-adjustable colour tokens.
+- `selector_phc_registry.csv` is required Selector runtime data. It is generated
+  canonical identity data and must not be casually edited.
+- If physical PHC values in the Selector question CSVs change, the registry
+  must be regenerated consistently before deployment.
 
 Do not rename files, change CSV headers, or change the comma-separated UTF-8
-format. This package does not include LDM materials data or the equipment PHC
-registry.
+format. This package does not include LDM materials data.
 
 Selector notes
 --------------
