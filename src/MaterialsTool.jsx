@@ -4,6 +4,7 @@ import { calculateBom } from "./domain/bom.js";
 import { createPhcLookup } from "./domain/bom-phc.js";
 import { exportBomExcel, materialsExcelFilename } from "./domain/bom-excel-workflow.js";
 import { createBomHistoryStore } from "./domain/bom-history.js";
+import { printMaterialsPdf } from "./domain/bom-pdf-workflow.js";
 import { createMaterialsViewState } from "./domain/bom-ui-state.js";
 import { formatMaterialIssue, formatMaterialState } from "./materials-ui-copy.js";
 
@@ -113,7 +114,11 @@ export default function MaterialsTool() {
 
   function printMaterials() {
     if (!result || !viewState.canExportPdf) return;
-    window.print();
+    printMaterialsPdf({
+      normalizedMdc: result.input.normalizedMdc,
+      documentObject: document,
+      print: () => window.print()
+    });
   }
 
   async function exportExcel() {

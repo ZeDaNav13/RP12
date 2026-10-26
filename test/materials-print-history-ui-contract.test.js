@@ -14,7 +14,11 @@ test("Materials uses browser printing and keeps activity limited to Excel export
     fs.readFile(stylesPath, "utf8")
   ]);
 
-  assert.match(materialsSource, /function printMaterials\(\)\s*\{[\s\S]*window\.print\(\)/);
+  assert.match(materialsSource, /import \{ printMaterialsPdf \} from "\.\/domain\/bom-pdf-workflow\.js";/);
+  assert.match(
+    materialsSource,
+    /function printMaterials\(\)\s*\{\s*if \(!result \|\| !viewState\.canExportPdf\) return;\s*printMaterialsPdf\(\{\s*normalizedMdc: result\.input\.normalizedMdc,\s*documentObject: document,\s*print: \(\) => window\.print\(\)\s*\}\);\s*\}/
+  );
   assert.doesNotMatch(materialsSource, /saveBomPdf/);
   assert.doesNotMatch(materialsSource, /requiresConfirmation\([^\n]*"pdf"/);
   assert.doesNotMatch(materialsSource, /recordSuccessfulExport\([^\n]*format:\s*"pdf"/);
