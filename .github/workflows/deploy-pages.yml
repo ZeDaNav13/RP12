@@ -1,0 +1,53 @@
+name: Deploy Selector to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: RP12_DEPLOY_PREFIX=/RP12 npm run build:selector
+      - run: |
+          node scripts/prepare-client-release.mjs \
+            --app selector \
+            --release-root pages-dist
+      - run: |
+          test -f pages-dist/selector/index.html
+          test -f pages-dist/selector/selector_phc_registry.csv
+          test -d pages-dist/selector/questions
+          test ! -e pages-dist/selector/phc_integration.csv
+          test ! -e pages-dist/selector/materials
+          test ! -e pages-dist/selector/components
+          test ! -e pages-dist/lista_materiais
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: pages-dist
+
+  deploy:
+    needs: build
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

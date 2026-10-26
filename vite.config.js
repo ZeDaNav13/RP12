@@ -20,6 +20,11 @@ const apps = {
   }
 };
 
+function deploymentPrefix() {
+  const prefix = (process.env.RP12_DEPLOY_PREFIX ?? "").trim().replace(/^\/+|\/+$/g, "");
+  return prefix ? `/${prefix}` : "";
+}
+
 function serveLdmPhcRegistry() {
   return {
     name: "serve-ldm-phc-registry",
@@ -56,7 +61,7 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [react(), ...(mode === "ldm" ? [serveLdmPhcRegistry()] : [])],
     root: appRoot,
-    base: app.base,
+    base: `${deploymentPrefix()}${app.base}`,
     publicDir: path.resolve(repoRoot, "public"),
     server: {
       fs: {

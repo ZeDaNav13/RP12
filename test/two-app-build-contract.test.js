@@ -58,7 +58,8 @@ test("two independent Vite app entries have explicit build contracts", async () 
   assert.match(viteSource, /const app = apps\[mode\]/);
   assert.match(viteSource, /if \(!app\)/);
   assert.match(viteSource, /root:\s*appRoot/);
-  assert.match(viteSource, /base:\s*app\.base/);
+  assert.match(viteSource, /function deploymentPrefix\(\)/);
+  assert.match(viteSource, /base:\s*`\$\{deploymentPrefix\(\)\}\$\{app\.base\}`/);
   assert.match(viteSource, /publicDir:\s*path\.resolve\(repoRoot, "public"\)/);
   assert.match(viteSource, /allow:\s*\[repoRoot\]/);
   assert.match(viteSource, /outDir:\s*path\.resolve\(repoRoot, app\.outDir\)/);

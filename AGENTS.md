@@ -21,9 +21,11 @@
 
 ## Delivery
 
-- GitHub Pages is not an active RP12 delivery target.
+- GitHub Pages is an approved client TEST surface for accepted `main`.
+- It is not the client delivery artifact.
 - Normal accepted delivery is through the Selector/LDM client release packages.
-- Do not add or enable a deployment workflow or deployment surface unless explicitly approved as project scope.
+- Pages deployment must not run generator, release regeneration, or ZIP creation.
+- Only accepted main is deployed.
 
 ## Protected Historical Artifact
 

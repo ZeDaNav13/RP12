@@ -5,7 +5,7 @@ import { cp, mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { promisify } from "node:util";
 
 const execFileAsync = promisify(execFile);
@@ -27,18 +27,70 @@ async function writeFixtureFile(root, relativePath, contents) {
   await writeFile(targetPath, contents);
 }
 
-test("repository baseline retires the stale GitHub Pages deployment workflow", async () => {
-  const [agents, ci] = await Promise.all([
+async function viteBase(mode, deployPrefix) {
+  const environment = { ...process.env };
+  if (deployPrefix === undefined) {
+    delete environment.RP12_DEPLOY_PREFIX;
+  } else {
+    environment.RP12_DEPLOY_PREFIX = deployPrefix;
+  }
+
+  const script = [
+    `import config from ${JSON.stringify(pathToFileURL(path.join(repoRoot, "vite.config.js")).href)};`,
+    `const resolved = await config({ mode: ${JSON.stringify(mode)} });`,
+    "process.stdout.write(resolved.base);"
+  ].join("\n");
+  const { stdout } = await execFileAsync(process.execPath, ["--input-type=module", "--eval", script], {
+    cwd: repoRoot,
+    env: environment
+  });
+
+  return stdout;
+}
+
+test("Vite preserves normal app bases and applies a normalized Pages deployment prefix", async () => {
+  assert.equal(await viteBase("selector"), "/selector/");
+  assert.equal(await viteBase("ldm"), "/lista_materiais/");
+  assert.equal(await viteBase("selector", "/RP12"), "/RP12/selector/");
+  assert.equal(await viteBase("ldm", "/RP12/"), "/RP12/lista_materiais/");
+});
+
+test("repository baseline deploys the accepted Selector as a Pages test surface", async () => {
+  const [agents, ci, workflow] = await Promise.all([
     readFile(path.join(repoRoot, "AGENTS.md"), "utf8"),
-    readFile(path.join(repoRoot, ".github/workflows/ci.yml"), "utf8")
+    readFile(path.join(repoRoot, ".github/workflows/ci.yml"), "utf8"),
+    readFile(path.join(repoRoot, ".github/workflows/deploy-pages.yml"), "utf8").catch(() => "")
   ]);
 
-  await assert.rejects(readFile(path.join(repoRoot, ".github/workflows/deploy-pages.yml"), "utf8"), {
-    code: "ENOENT"
-  });
-  assert.match(agents, /GitHub Pages is not an active RP12 delivery target/i);
+  assert.match(workflow, /on:\s*\n\s*push:\s*\n\s*branches:\s*\[main\]/);
+  assert.match(workflow, /workflow_dispatch:/);
+  assert.match(workflow, /contents:\s*read/);
+  assert.match(workflow, /pages:\s*write/);
+  assert.match(workflow, /id-token:\s*write/);
+  assert.match(workflow, /node-version:\s*22/);
+  assert.match(workflow, /npm ci/);
+  assert.match(workflow, /npm test/);
+  assert.match(workflow, /RP12_DEPLOY_PREFIX=\/RP12 npm run build:selector/);
+  assert.doesNotMatch(workflow, /build:ldm/);
+  assert.match(workflow, /node scripts\/prepare-client-release\.mjs[\s\\]+--app selector[\s\\]+--release-root pages-dist/);
+  assert.match(workflow, /test -f pages-dist\/selector\/index\.html/);
+  assert.match(workflow, /test -f pages-dist\/selector\/selector_phc_registry\.csv/);
+  assert.match(workflow, /test -d pages-dist\/selector\/questions/);
+  assert.match(workflow, /test ! -e pages-dist\/selector\/phc_integration\.csv/);
+  assert.match(workflow, /test ! -e pages-dist\/selector\/materials/);
+  assert.match(workflow, /test ! -e pages-dist\/selector\/components/);
+  assert.match(workflow, /test ! -e pages-dist\/lista_materiais/);
+  assert.match(workflow, /actions\/configure-pages@v5/);
+  assert.match(workflow, /actions\/upload-pages-artifact@v4/);
+  assert.match(workflow, /path:\s*pages-dist/);
+  assert.match(workflow, /actions\/deploy-pages@v4/);
+  assert.match(workflow, /name:\s*github-pages/);
+  assert.doesNotMatch(workflow, /generate:combinations|release:prepare|release:client|--zip/);
+
+  assert.match(agents, /GitHub Pages is an approved client TEST surface/i);
+  assert.match(agents, /not the client delivery artifact/i);
   assert.match(agents, /Selector\/LDM client release packages/i);
-  assert.match(agents, /release regeneration requires explicit accepted release work/i);
+  assert.match(agents, /Only accepted main is deployed/i);
 
   for (const command of ["npm ci", "npm test", "npm run build:selector", "npm run build:ldm"]) {
     assert.match(ci, new RegExp(escapeRegExp(command)));
